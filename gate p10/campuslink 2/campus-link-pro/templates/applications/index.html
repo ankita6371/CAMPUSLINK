@@ -1,0 +1,179 @@
+{% extends "base.html" %}
+
+{% block title %}Applications | CAMPUSLINK{% endblock %}
+
+{% block content %}
+<div class="page-header applications-header">
+    <div>
+        <div class="eyebrow"><i class="fa-solid fa-layer-group"></i> Recruitment operations</div>
+        <h1>Applications</h1>
+        <p>Search, review, and move every candidate through your placement pipeline.</p>
+    </div>
+    <div class="page-header-actions">
+        <button class="btn btn-secondary" type="button" id="exportApplications">
+            <i class="fa-solid fa-download"></i> Export CSV
+        </button>
+        <button class="btn btn-primary" type="button" id="openApplicationModal">
+            <i class="fa-solid fa-plus"></i> Add application
+        </button>
+    </div>
+</div>
+
+<div class="stats-grid application-stats">
+    {% set total = applications|length %}
+    {% set stats = [
+        ("Total applications", total, "fa-file-lines", "primary"),
+        ("Applied", status_counts.get("Applied", 0), "fa-paper-plane", "info"),
+        ("In progress", status_counts.get("In Progress", 0), "fa-user-check", "warning"),
+        ("Selected", status_counts.get("Selected", 0), "fa-circle-check", "success"),
+        ("Rejected", status_counts.get("Rejected", 0), "fa-circle-xmark", "danger")
+    ] %}
+    {% for label, value, icon, tone in stats %}
+    <button class="stat-card stat-card-button" type="button" data-stat-status="{{ '' if loop.first else ('In Progress' if label == 'In progress' else label) }}" aria-label="Filter applications by {{ label }}">
+        <span class="stat-icon stat-icon-{{ tone }}"><i class="fa-solid {{ icon }}"></i></span>
+        <span><span class="stat-label">{{ label }}</span><strong class="stat-value">{{ value }}</strong></span>
+        <i class="fa-solid fa-arrow-up-right-from-square stat-card-arrow"></i>
+    </button>
+    {% endfor %}
+</div>
+
+<div class="content-card application-card">
+    <div class="card-header application-card-header">
+        <div>
+            <h2>Application records</h2>
+            <p><span id="visibleCount">{{ total }}</span> records matching your view</p>
+        </div>
+        <div class="view-label"><span class="live-dot"></span> Live data</div>
+    </div>
+
+    <div class="application-toolbar">
+        <label class="search-box application-search">
+            <i class="fa-solid fa-magnifying-glass"></i>
+            <input id="applicationSearch" type="search" placeholder="Search student, registration, company or role..." autocomplete="off">
+            <kbd>/</kbd>
+        </label>
+        <select id="statusFilter" aria-label="Filter by status">
+            <option value="">All statuses</option>
+            <option value="In Progress">In progress</option>
+            {% for status in ["Applied", "In Progress", "Selected", "Rejected"] %}
+            <option value="{{ status }}">{{ status }}</option>
+            {% endfor %}
+        </select>
+        <select id="driveFilter" aria-label="Filter by job drive">
+            <option value="">All job drives</option>
+            {% for job in jobs %}
+            <option value="{{ job['id'] }}">{{ job['company_name'] }} · {{ job['role'] }}</option>
+            {% endfor %}
+        </select>
+        <button class="btn btn-quiet" type="button" id="clearApplicationFilters">Clear filters</button>
+    </div>
+
+    <div class="table-container">
+        <table class="data-table applications-table">
+            <thead><tr><th>Candidate profile</th><th>Job drive &amp; package</th><th>Match</th><th>Applied on</th><th>Status</th><th></th></tr></thead>
+            <tbody id="applicationRows">
+            {% for application in applications %}
+            <tr data-search="{{ application['student_name']|lower }} {{ application['registration_no']|lower }} {{ application['company_name']|lower }} {{ application['role']|lower }} {{ application['status']|lower }}" data-status="{{ application['status'] }}" data-job="{{ application['job_id'] }}">
+                <td>
+                    <a class="student-info table-link" href="{{ url_for('view_student', student_id=application['student_id']) }}">
+                        <span class="avatar">{{ application['student_name'][:2]|upper }}</span>
+                        <span><strong>{{ application['student_name'] }}</strong><small>{{ application['registration_no'] }} · {{ application['student_branch'] }} · CGPA {{ "%.2f"|format(application['student_cgpa']) }}</small></span>
+                    </a>
+                </td>
+                <td><strong class="role-name">{{ application['role'] }}</strong><small class="company-name">{{ application['company_name'] }}{% if application['package'] is not none %} · {{ application['package']|round(1) }} LPA{% endif %}</small></td>
+                <td><span class="match-score">{{ application['match_score']|round|int }}%</span></td>
+                <td>{{ application['applied_at'][:10] if application['applied_at'] else "—" }}</td>
+                <td>
+                    <form class="status-form" method="POST" action="{{ url_for('update_application', application_id=application['id']) }}">
+                        <select name="status" class="status-select status-{{ application['status']|lower|replace(' ', '-') }}" aria-label="Update status for {{ application['student_name'] }}">
+                            {% for status in ["Applied", "In Progress", "Selected", "Rejected"] %}
+                            <option value="{{ status }}" {% if application['status'] == status %}selected{% endif %}>{{ status }}</option>
+                            {% endfor %}
+                        </select>
+                    </form>
+                </td>
+                <td><a class="action-btn" href="{{ url_for('view_student', student_id=application['student_id']) }}" title="View candidate"><i class="fa-solid fa-arrow-up-right-from-square"></i></a></td>
+            </tr>
+            {% else %}
+            <tr><td colspan="6" class="empty-state"><i class="fa-solid fa-inbox"></i><strong>No applications yet</strong><span>Add your first application to start tracking candidates.</span></td></tr>
+            {% endfor %}
+            </tbody>
+        </table>
+        <div id="noResults" class="empty-state is-hidden"><i class="fa-solid fa-filter-circle-xmark"></i><strong>No matching applications</strong><span>Try clearing a filter or searching for another candidate.</span></div>
+    </div>
+</div>
+
+<div class="modal-backdrop" id="applicationModal" aria-hidden="true">
+    <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="applicationModalTitle">
+        <div class="modal-heading"><div><span class="eyebrow">New record</span><h2 id="applicationModalTitle">Add application</h2></div><button class="modal-close" type="button" aria-label="Close"><i class="fa-solid fa-xmark"></i></button></div>
+        <form method="POST" action="{{ url_for('add_application') }}">
+            {% if selected_student_id %}<input type="hidden" name="return_to_student" value="{{ selected_student_id }}">{% endif %}
+            <div class="form-group"><label for="student_id">Student *</label><select id="student_id" name="student_id" required><option value="">Select student</option>{% for student in students %}<option value="{{ student['id'] }}" {% if student['id'] == selected_student_id %}selected{% endif %}>{{ student['name'] }} · {{ student['registration_no'] }}</option>{% endfor %}</select></div>
+            <div class="form-group"><label for="job_id">Job drive *</label><select id="job_id" name="job_id" required><option value="">Select job drive</option>{% for job in jobs %}<option value="{{ job['id'] }}">{{ job['company_name'] }} · {{ job['role'] }}</option>{% endfor %}</select></div>
+            <div class="form-grid"><div class="form-group"><label for="match_score">Match score</label><input id="match_score" name="match_score" type="number" min="0" max="100" step="1" value="0"></div><div class="form-group"><label for="status">Initial status</label><select id="status" name="status"><option>Applied</option><option>In Progress</option><option>Selected</option><option>Rejected</option></select></div></div>
+            <div class="modal-actions"><button class="btn btn-secondary modal-cancel" type="button">Cancel</button><button class="btn btn-primary" type="submit"><i class="fa-solid fa-check"></i> Create application</button></div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+(() => {
+    const search = document.querySelector("#applicationSearch");
+    const status = document.querySelector("#statusFilter");
+    const drive = document.querySelector("#driveFilter");
+    const rows = [...document.querySelectorAll("#applicationRows tr[data-search]")];
+    const count = document.querySelector("#visibleCount");
+    const noResults = document.querySelector("#noResults");
+    const applyFilters = () => {
+        const query = search.value.trim().toLowerCase();
+        let visible = 0;
+        rows.forEach(row => {
+                const statusMatches = !status.value || row.dataset.status === status.value;
+                const matches = (!query || row.dataset.search.includes(query)) &&
+                    statusMatches &&
+                    (!drive.value || row.dataset.job === drive.value);
+            row.hidden = !matches;
+            if (matches) visible++;
+        });
+        count.textContent = visible;
+        noResults.classList.toggle("is-hidden", visible > 0 || rows.length === 0);
+    };
+    search.addEventListener("input", applyFilters);
+    [status, drive].forEach(control => control.addEventListener("change", applyFilters));
+    document.querySelector("#clearApplicationFilters").addEventListener("click", () => { search.value = ""; status.value = ""; drive.value = ""; applyFilters(); });
+    document.querySelectorAll("[data-stat-status]").forEach(card => card.addEventListener("click", () => {
+        const label = card.dataset.statStatus;
+        if (!label) { status.value = ""; }
+        else { status.value = label; }
+        applyFilters();
+        document.querySelector(".application-card").scrollIntoView({behavior: "smooth", block: "start"});
+    }));
+    document.addEventListener("keydown", event => { if (event.key === "/" && document.activeElement !== search && !["INPUT", "SELECT", "TEXTAREA"].includes(document.activeElement.tagName)) { event.preventDefault(); search.focus(); } });
+    document.querySelectorAll(".status-select").forEach(select => select.addEventListener("change", () => select.form.submit()));
+    const modal = document.querySelector("#applicationModal");
+    const closeModal = () => { modal.classList.remove("is-open"); modal.setAttribute("aria-hidden", "true"); };
+    const openModal = () => { modal.classList.add("is-open"); modal.setAttribute("aria-hidden", "false"); document.querySelector("#student_id").focus(); };
+    document.querySelector("#openApplicationModal").addEventListener("click", openModal);
+    if (new URLSearchParams(window.location.search).has("student_id")) openModal();
+    document.querySelectorAll(".modal-close, .modal-cancel").forEach(button => button.addEventListener("click", closeModal));
+    modal.addEventListener("click", event => { if (event.target === modal) closeModal(); });
+    document.querySelector("#exportApplications").addEventListener("click", () => {
+        const visibleRows = rows.filter(row => !row.hidden);
+        const csv = [["Student", "Registration", "Job drive", "Match", "Applied on", "Status"], ...visibleRows.map(row => {
+            const cells = row.querySelectorAll("td");
+            return [
+                cells[0].querySelector("strong").innerText,
+                cells[0].querySelector("small").innerText,
+                cells[1].innerText.replace(/\n/g, " "),
+                cells[2].innerText,
+                cells[3].innerText,
+                cells[4].innerText
+            ];
+        })].map(line => line.map(value => `"${value.replace(/"/g, '""')}"`).join(",")).join("\n");
+        const link = document.createElement("a"); link.href = URL.createObjectURL(new Blob([csv], {type: "text/csv"})); link.download = "campuslink-applications.csv"; link.click(); URL.revokeObjectURL(link.href);
+    });
+})();
+</script>
+{% endblock %}

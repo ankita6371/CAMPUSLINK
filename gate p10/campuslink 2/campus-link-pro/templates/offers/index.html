@@ -1,0 +1,150 @@
+{% extends "base.html" %}
+
+{% block title %}Offers | CAMPUSLINK{% endblock %}
+
+{% block content %}
+<div class="page-header offers-header">
+    <div>
+        <div class="eyebrow"><i class="fa-solid fa-award"></i> Placement outcomes</div>
+        <h1>Offers</h1>
+        <p>Track real student offers, compensation packages, and decision progress in one place.</p>
+    </div>
+    <div class="page-header-actions">
+        <button class="btn btn-secondary" type="button" id="exportOffers"><i class="fa-solid fa-download"></i> Export CSV</button>
+        <button class="btn btn-primary" type="button" id="openOfferModal" {% if not selected_applications %}disabled title="Mark an application as Selected first"{% endif %}><i class="fa-solid fa-plus"></i> Create offer</button>
+    </div>
+</div>
+
+{% set total = package_summary["total_offers"] %}
+<div class="stats-grid offer-stats">
+    {% for label, value, icon, tone in [
+        ("Total offers", total, "fa-file-circle-check", "primary"),
+        ("Accepted", status_counts["Accepted"], "fa-circle-check", "success"),
+        ("Pending decision", status_counts["Pending"], "fa-clock", "warning"),
+        ("Declined", status_counts["Declined"], "fa-circle-xmark", "danger")
+    ] %}
+    <div class="stat-card offer-stat offer-stat-{{ tone }}">
+        <span class="stat-icon stat-icon-{{ tone }}"><i class="fa-solid {{ icon }}"></i></span>
+        <span><span class="stat-label">{{ label }}</span><strong class="stat-value">{{ value }}</strong></span>
+    </div>
+    {% endfor %}
+</div>
+
+<div class="content-card offer-summary-card">
+    <div class="card-header"><div><span class="section-kicker">PORTFOLIO OVERVIEW</span><h2>Offer outcomes &amp; compensation</h2><p>Compensation averages include recorded offers; acceptance rate excludes pending decisions.</p></div><span class="view-label"><span class="live-dot"></span> Live data</span></div>
+    <div class="offer-summary-grid">
+        <div><span>Highest package</span><strong>{{ (package_summary["highest"]|round(1) ~ " LPA") if total else "—" }}</strong></div>
+        <div><span>Average package</span><strong>{{ (package_summary["average"]|round(1) ~ " LPA") if total else "—" }}</strong></div>
+        <div><span>Lowest package</span><strong>{{ (package_summary["lowest"]|round(1) ~ " LPA") if total else "—" }}</strong></div>
+        <div><span>Companies hiring</span><strong>{{ package_summary["companies"] }}</strong></div>
+        <div><span>Acceptance rate</span><strong>{% if decided_offer_count %}{{ acceptance_rate }}%{% else %}—{% endif %}</strong></div>
+    </div>
+</div>
+
+<div class="content-card offer-card">
+    <div class="card-header offer-card-header"><div><span class="section-kicker">DECISION TRACKER</span><h2>Offer records</h2><p><span id="offerCount">{{ total }}</span> of <span id="offerTotal">{{ total }}</span> offer records matching your view</p></div></div>
+    <div class="offer-toolbar">
+        <label class="search-box offer-search"><i class="fa-solid fa-magnifying-glass"></i><input id="offerSearch" type="search" placeholder="Search student, company, role or registration..." autocomplete="off"></label>
+        <select id="offerStatusFilter" aria-label="Filter offers by status"><option value="">All statuses</option><option>Accepted</option><option>Pending</option><option>Declined</option></select>
+        <select id="offerCompanyFilter" aria-label="Filter offers by company"><option value="">All companies</option>{% for company in offers|map(attribute="company_name")|unique|sort %}<option value="{{ company|lower }}">{{ company }}</option>{% endfor %}</select>
+        <button class="btn btn-quiet" type="button" id="clearOfferFilters">Clear filters</button>
+    </div>
+    <div class="table-container">
+        <table class="data-table offers-table">
+            <thead><tr><th>Student</th><th>Company</th><th>Role</th><th>Offer date</th><th>Joining date</th><th>Package</th><th>Status</th><th>Action</th></tr></thead>
+            <tbody id="offerRows">
+            {% for offer in offers %}
+            <tr data-search="{{ offer['student_name']|lower }} {{ offer['registration_no']|lower }} {{ offer['company_name']|lower }} {{ offer['role']|lower }}" data-company="{{ offer['company_name']|lower }}" data-status="{{ offer['status'] }}">
+                <td><a class="student-info table-link" href="{{ url_for('view_student', student_id=offer['student_id']) }}"><span class="avatar">{{ offer['student_name'][:2]|upper }}</span><span><strong>{{ offer['student_name'] }}</strong><small>{{ offer['registration_no'] }} · {{ offer['student_branch'] }} · CGPA {{ "%.2f"|format(offer['student_cgpa']) }}</small></span></a></td>
+                <td><strong class="offer-company">{{ offer['company_name'] }}</strong></td>
+                <td><span class="offer-role">{{ offer['role'] }}</span></td>
+                <td><span class="offer-date"><i class="fa-regular fa-calendar"></i>{{ offer['offer_date']|job_date }}</span></td>
+                <td><span class="offer-date"><i class="fa-solid fa-arrow-right-to-bracket"></i>{{ offer['joining_date']|job_date }}</span></td>
+                <td><strong class="package-value">{{ offer['package']|round(1) if offer['package'] is not none else "—" }}{% if offer['package'] is not none %} LPA{% endif %}</strong></td>
+                <td>
+                    <form method="POST" action="{{ url_for('update_offer', offer_id=offer['id']) }}">
+                        <select name="status" class="status-select offer-status-select status-{{ offer['status']|lower }}" aria-label="Update offer decision for {{ offer['student_name'] }} at {{ offer['company_name'] }}">
+                            {% for status in ["Pending", "Accepted", "Declined"] %}
+                            <option value="{{ status }}" {% if offer['status'] == status %}selected{% endif %}>{{ status }}</option>
+                            {% endfor %}
+                        </select>
+                    </form>
+                </td>
+                <td><div class="offer-actions"><a class="action-btn" href="{{ url_for('view_student', student_id=offer['student_id']) }}" title="View student"><i class="fa-solid fa-eye"></i></a><a class="action-btn" href="{{ url_for('jobs') }}" title="View job drives"><i class="fa-solid fa-briefcase"></i></a></div></td>
+            </tr>
+            {% else %}
+            <tr><td colspan="8" class="empty-state"><i class="fa-solid fa-award"></i><strong>No offers yet</strong><span>Offer records will appear here after candidates are selected.</span></td></tr>
+            {% endfor %}
+            </tbody>
+        </table>
+        <div id="noOfferResults" class="empty-state is-hidden"><i class="fa-solid fa-filter-circle-xmark"></i><strong>No matching offers</strong><span>Try changing your search or filters.</span></div>
+    </div>
+</div>
+
+<div class="modal-backdrop" id="offerModal" aria-hidden="true">
+    <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="offerModalTitle">
+        <div class="modal-heading">
+            <div><span class="eyebrow">Placement outcome</span><h2 id="offerModalTitle">Create offer</h2></div>
+            <button class="modal-close" type="button" aria-label="Close"><i class="fa-solid fa-xmark"></i></button>
+        </div>
+        {% if selected_applications %}
+        <form method="POST" action="{{ url_for('add_offer') }}">
+            {% if selected_student_id %}<input type="hidden" name="return_to_student" value="{{ selected_student_id }}">{% endif %}
+            <div class="form-group">
+                <label for="offerApplication">Selected application *</label>
+                <select id="offerApplication" name="application_id" required>
+                    <option value="">Select a candidate and job</option>
+                    {% for application in selected_applications %}
+                    <option value="{{ application['id'] }}"
+                            data-student="{{ application['student_id'] }}"
+                            data-package="{{ application['package'] or 0 }}"
+                            {% if application['student_id'] == selected_student_id %}selected{% endif %}>
+                        {{ application['student_name'] }} · {{ application['company_name'] }} · {{ application['role'] }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="form-grid">
+                <div class="form-group"><label for="offerPackage">Package (LPA) *</label><input id="offerPackage" name="package" type="number" min="0" step="0.1" required></div>
+                <div class="form-group"><label for="offerDate">Offer date</label><input id="offerDate" name="offer_date" type="date"></div>
+                <div class="form-group"><label for="joiningDate">Joining date</label><input id="joiningDate" name="joining_date" type="date"></div>
+            </div>
+            <p class="certificate-upload-note">New offers start as Pending. Update the decision from this page after confirming with the student.</p>
+            <div class="modal-actions"><button class="btn btn-secondary modal-cancel" type="button">Cancel</button><button class="btn btn-primary" type="submit"><i class="fa-solid fa-check"></i> Create offer</button></div>
+        </form>
+        {% else %}
+        <div class="empty-state"><i class="fa-solid fa-award"></i><strong>No selected applications</strong><span>Mark an application as Selected before creating its offer.</span></div>
+        {% endif %}
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+(() => {
+    const modal = document.querySelector("#offerModal");
+    const openModal = () => { modal.classList.add("is-open"); modal.setAttribute("aria-hidden", "false"); document.querySelector("#offerApplication")?.focus(); };
+    const closeModal = () => { modal.classList.remove("is-open"); modal.setAttribute("aria-hidden", "true"); };
+    document.querySelector("#openOfferModal").addEventListener("click", openModal);
+    document.querySelectorAll("#offerModal .modal-close, #offerModal .modal-cancel").forEach(button => button.addEventListener("click", closeModal));
+    modal.addEventListener("click", event => { if (event.target === modal) closeModal(); });
+    const applicationSelect = document.querySelector("#offerApplication");
+    if (applicationSelect) {
+        const packageInput = document.querySelector("#offerPackage");
+        const updatePackage = () => { packageInput.value = applicationSelect.selectedOptions[0]?.dataset.package || ""; };
+        applicationSelect.addEventListener("change", updatePackage);
+        if (applicationSelect.value) updatePackage();
+        const studentId = new URLSearchParams(window.location.search).get("student_id");
+        if (studentId && [...applicationSelect.options].some(option => option.dataset.student === studentId)) openModal();
+    }
+    const search = document.querySelector("#offerSearch"), status = document.querySelector("#offerStatusFilter"), company = document.querySelector("#offerCompanyFilter");
+    const rows = [...document.querySelectorAll("#offerRows tr[data-search]")], count = document.querySelector("#offerCount"), totalCount = document.querySelector("#offerTotal"), empty = document.querySelector("#noOfferResults");
+    const filter = () => { const query = search.value.trim().toLowerCase(); let visible = 0; rows.forEach(row => { const match = (!query || row.dataset.search.includes(query)) && (!status.value || row.dataset.status === status.value) && (!company.value || row.dataset.company === company.value); row.hidden = !match; if (match) visible++; }); count.textContent = visible; totalCount.textContent = rows.length; empty.classList.toggle("is-hidden", visible > 0 || rows.length === 0); };
+    search.addEventListener("input", filter); status.addEventListener("change", filter); company.addEventListener("change", filter);
+    document.querySelectorAll(".status-select").forEach(select => select.addEventListener("change", () => select.form.submit()));
+    document.querySelector("#clearOfferFilters").addEventListener("click", () => { search.value = ""; status.value = ""; company.value = ""; filter(); });
+    document.querySelector("#exportOffers").addEventListener("click", () => { const visibleRows = rows.filter(row => !row.hidden); const csv = [["Student", "Company", "Role", "Offer date", "Joining date", "Package", "Status"], ...visibleRows.map(row => [...row.querySelectorAll("td")].slice(0, 7).map(cell => cell.innerText.replace(/\n/g, " ")))].map(line => line.map(value => `"${value.replace(/"/g, '""')}"`).join(",")).join("\n"); const link = document.createElement("a"); link.href = URL.createObjectURL(new Blob([csv], {type: "text/csv"})); link.download = "campuslink-offers.csv"; link.click(); URL.revokeObjectURL(link.href); });
+})();
+</script>
+{% endblock %}

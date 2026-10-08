@@ -1,0 +1,92 @@
+{% extends "base.html" %}
+
+{% block title %}Mock Tests | CAMPUSLINK{% endblock %}
+
+{% block content %}
+<div class="page-header mock-test-header">
+    <div>
+        <div class="eyebrow"><i class="fa-solid fa-clipboard-question"></i> Practice and preparation</div>
+        <h1>Mock Tests</h1>
+        <p>Practice aptitude and technical skills with randomized questions and instant results.</p>
+    </div>
+</div>
+
+<div class="stats-grid mock-test-stats">
+    <div class="stat-card"><span class="stat-icon stat-icon-primary"><i class="fa-solid fa-clipboard-list"></i></span><span><span class="stat-label">Total attempts</span><strong class="stat-value">{{ summary['total_attempts'] or 0 }}</strong></span></div>
+    <div class="stat-card"><span class="stat-icon stat-icon-success"><i class="fa-solid fa-circle-check"></i></span><span><span class="stat-label">Completed</span><strong class="stat-value">{{ summary['completed_attempts'] or 0 }}</strong></span></div>
+    <div class="stat-card"><span class="stat-icon stat-icon-info"><i class="fa-solid fa-chart-simple"></i></span><span><span class="stat-label">Average score</span><strong class="stat-value">{{ "%.0f"|format(summary['average_score'] or 0) }}%</strong></span></div>
+</div>
+
+<section class="mock-test-intro-grid">
+    <div class="content-card mock-test-start-card">
+        <div class="card-header">
+            <div><span class="eyebrow">Start practicing</span><h2>Choose a test</h2><p>Each attempt gets a fresh randomized set of 10 questions.</p></div>
+            <span class="mock-test-start-icon"><i class="fa-solid fa-shuffle"></i></span>
+        </div>
+        <form method="POST" action="{{ url_for('start_mock_test') }}" class="mock-test-start-form">
+            <div class="form-group">
+                {% if current_user['role'] == 'student' %}
+                <input type="hidden" name="student_id" value="{{ current_user['student_id'] }}">
+                <div class="mock-test-start-note"><i class="fa-solid fa-user-check"></i><span>Results are saved privately to your student profile.</span></div>
+                {% else %}
+                <label for="mockStudent">Student *</label>
+                <select id="mockStudent" name="student_id" required>
+                    <option value="">Select student</option>
+                    {% for student in students %}
+                    <option value="{{ student['id'] }}" {% if student['id'] == selected_student_id %}selected{% endif %}>{{ student['name'] }} · {{ student['registration_no'] }} · {{ student['branch'] }}</option>
+                    {% endfor %}
+                </select>
+                {% endif %}
+            </div>
+            <div class="form-group">
+                <label for="mockCategory">Test category *</label>
+                <select id="mockCategory" name="category" required>
+                    <option value="">Select category</option>
+                    {% for category in categories %}
+                    <option value="{{ category['category'] }}" {% if category['category'] == selected_category %}selected{% endif %}>{{ category['category'] }} · {{ category['question_count'] }} questions in bank</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="mock-test-start-note"><i class="fa-solid fa-circle-info"></i><span>10 questions · One point each · Answers and explanations appear after submission. Your last question set won't repeat on your next attempt in the same category.</span></div>
+            <button class="btn btn-primary" type="submit"><i class="fa-solid fa-play"></i> Start new test</button>
+        </form>
+    </div>
+
+    <div class="mock-test-category-card">
+        <div class="mock-test-category-heading"><span class="eyebrow">Question bank</span><h2>Choose what to practice</h2></div>
+        {% for category in categories %}
+        <div class="mock-test-category-row">
+            <span class="mock-test-category-icon mock-test-category-{{ category['category']|lower|replace(' ', '-') }}">
+                <i class="fa-solid {{ 'fa-calculator' if category['category'] == 'Aptitude' else 'fa-brain' if category['category'] == 'Logical Reasoning' else 'fa-code' if category['category'] == 'Python' else 'fa-database' }}"></i>
+            </span>
+            <span><strong>{{ category['category'] }}</strong><small>{{ category['question_count'] }} questions · randomized for every attempt</small></span>
+            <i class="fa-solid fa-check"></i>
+        </div>
+        {% endfor %}
+    </div>
+</section>
+
+<section class="content-card mock-test-history-card">
+    <div class="card-header"><div><h2>Recent attempts</h2><p>Resume tests in progress or review completed results.</p></div><span class="view-label"><span class="live-dot"></span> Saved results</span></div>
+    <div class="table-container">
+        <table class="data-table mock-test-history">
+            <thead><tr>{% if current_user['role'] != 'student' %}<th>Student</th>{% endif %}<th>Branch</th><th>Category</th><th>Score</th><th>Status</th><th>Started</th><th></th></tr></thead>
+            <tbody>
+            {% for attempt in attempts %}
+            <tr>
+                {% if current_user['role'] != 'student' %}<td><a href="{{ url_for('view_student', student_id=attempt['student_id']) }}" class="table-link"><strong>{{ attempt['student_name'] }}</strong><small class="mock-test-registration">{{ attempt['registration_no'] }}</small></a></td>{% endif %}
+                <td>{{ attempt['branch'] }}</td>
+                <td><span class="mock-test-category-pill">{{ attempt['category'] }}</span></td>
+                <td>{% if attempt['status'] == 'Completed' %}<strong class="mock-test-score">{{ attempt['score'] }}/{{ attempt['total_questions'] }}</strong><small class="mock-test-percent">{{ ((attempt['score'] or 0) * 100 / attempt['total_questions'])|round|int }}%</small>{% else %}—{% endif %}</td>
+                <td><span class="mock-attempt-status mock-attempt-status-{{ attempt['status']|lower|replace(' ', '-') }}">{{ attempt['status'] }}</span></td>
+                <td>{{ attempt['started_at'][:16] if attempt['started_at'] else "—" }}</td>
+                <td><a class="btn btn-secondary btn-sm" href="{{ url_for('view_mock_test', attempt_id=attempt['id']) }}">{{ "Resume test" if attempt['status'] == 'In Progress' else "Review results" }}</a></td>
+            </tr>
+            {% else %}
+            <tr><td colspan="{{ 6 if current_user['role'] == 'student' else 7 }}" class="empty-state"><i class="fa-solid fa-clipboard-question"></i><strong>No test attempts yet</strong><span>Choose a category above to begin practicing.</span></td></tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</section>
+{% endblock %}

@@ -1,0 +1,98 @@
+{% extends "base.html" %}
+
+{% block title %}Analytics | CAMPUSLINK{% endblock %}
+
+{% block content %}
+<div class="page-header analytics-header">
+    <div>
+        <div class="eyebrow"><i class="fa-solid fa-chart-line"></i> Placement intelligence</div>
+        <h1>Placement Analytics</h1>
+        <p>Understand student outcomes, package performance, and recruitment momentum.</p>
+    </div>
+    <div class="page-header-actions">
+        <div class="academic-year-picker">
+            <span><i class="fa-regular fa-calendar"></i> Academic year</span>
+            <button class="academic-year-trigger" type="button" id="academicYearTrigger">{{ academic_year }} <i class="fa-solid fa-chevron-down"></i></button>
+            <div class="academic-year-menu" id="academicYearMenu">
+                {% for year in ["2026-27", "2025-26", "2024-25"] %}<a class="{% if year == academic_year %}active{% endif %}" href="{{ url_for('analytics', year=year) }}">{{ year }}{% if year == academic_year %}<i class="fa-solid fa-check"></i>{% endif %}</a>{% endfor %}
+            </div>
+        </div>
+        <button class="btn btn-primary" type="button" id="exportAnalytics"><i class="fa-solid fa-download"></i> Export report</button>
+    </div>
+</div>
+
+<div class="stats-grid analytics-stats">
+    <div class="stat-card analytics-stat"><span class="stat-icon"><i class="fa-solid fa-users"></i></span><span><span class="stat-label">Total students</span><strong class="stat-value">{{ total_students }}</strong><small class="analytics-stat-caption">All registered students</small></span></div>
+    <div class="stat-card analytics-stat"><span class="stat-icon stat-icon-success"><i class="fa-solid fa-user-check"></i></span><span><span class="stat-label">Students placed</span><strong class="stat-value">{{ placed_students }}</strong></span></div>
+    <div class="stat-card analytics-stat"><span class="stat-icon stat-icon-info"><i class="fa-solid fa-chart-pie"></i></span><span><span class="stat-label">Placement rate</span><strong class="stat-value">{{ placement_rate }}%</strong></span></div>
+    <div class="stat-card analytics-stat"><span class="stat-icon stat-icon-warning"><i class="fa-solid fa-building"></i></span><span><span class="stat-label">Recruiting companies</span><strong class="stat-value">{{ total_companies }}</strong></span></div>
+</div>
+
+<div class="analytics-section-grid">
+    <div class="content-card analytics-card placement-status-card">
+        <div class="card-header"><div><h2>Placement status</h2><p>Current distribution of student outcomes.</p></div></div>
+        {% set status_total = cohort_students or 1 %}
+        <div class="placement-status-list">
+            {% for item in placement_status %}
+            {% set percentage = ((item["total"] / status_total) * 100)|round(1) %}
+            <div class="placement-status-row"><span class="status-name"><i class="fa-solid fa-circle"></i>{{ item["placement_status"] }}</span><div class="analytics-progress"><span style="width:{{ percentage }}%"></span></div><strong>{{ item["total"] }} <small>{{ percentage }}%</small></strong></div>
+            {% else %}<div class="empty-state">No placement status data available.</div>{% endfor %}
+        </div>
+    </div>
+
+    <div class="content-card analytics-card">
+        <div class="card-header"><div><h2>Recruitment overview</h2><p>Progress across the placement funnel.</p></div></div>
+        <div class="recruitment-overview-grid">
+            <div><span>Applications</span><strong>{{ recruitment_overview["applications"] }}</strong><i class="fa-solid fa-file-lines"></i></div>
+            <div><span>Interviews</span><strong>{{ recruitment_overview["interviews"] }}</strong><i class="fa-solid fa-calendar-check"></i></div>
+            <div><span>Offers</span><strong>{{ recruitment_overview["offers"] }}</strong><i class="fa-solid fa-award"></i></div>
+            <div><span>Active recruiters</span><strong>{{ recruitment_overview["recruiting_companies"] }}</strong><i class="fa-solid fa-building"></i></div>
+        </div>
+    </div>
+</div>
+
+<div class="analytics-section-grid">
+    <div class="content-card analytics-card">
+        <div class="card-header"><div><h2>Branch-wise placement</h2><p>Placement rate by academic department.</p></div></div>
+        <div class="branch-analytics-list">
+            {% for branch in branch_placement %}
+            {% set branch_rate = ((branch["placed"] / branch["total"]) * 100)|round(1) if branch["total"] else 0 %}
+            <div class="branch-analytics-row"><div><strong>{{ branch["branch"] }}</strong><small>{{ branch["placed"] }} of {{ branch["total"] }} placed</small></div><div class="analytics-progress"><span style="width:{{ branch_rate }}%"></span></div><b>{{ branch_rate }}%</b></div>
+            {% else %}<div class="empty-state">No branch placement data available.</div>{% endfor %}
+        </div>
+    </div>
+
+    <div class="content-card analytics-card">
+        <div class="card-header"><div><h2>Salary package analysis</h2><p>Offer distribution by annual package.</p></div></div>
+        {% set max_package_count = [package_ranges["below_five"], package_ranges["five_eight"], package_ranges["eight_twelve"], package_ranges["above_twelve"]]|max or 1 %}
+        <div class="package-analytics-list">
+            {% for label, count in [("Below 5 LPA", package_ranges["below_five"]), ("5 - 8 LPA", package_ranges["five_eight"]), ("8 - 12 LPA", package_ranges["eight_twelve"]), ("12+ LPA", package_ranges["above_twelve"])] %}
+            <div class="package-analytics-row"><span>{{ label }}</span><div class="analytics-progress"><span style="width:{{ ((count / max_package_count) * 100)|round(1) }}%"></span></div><strong>{{ count }}</strong></div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+
+<div class="content-card analytics-card top-companies-card">
+    <div class="card-header"><div><h2>Top recruiting companies</h2><p>Organizations contributing the most offers this academic year.</p></div><a class="btn btn-quiet" href="{{ url_for('companies') }}">View companies</a></div>
+    <div class="top-companies-list">
+        {% for company in top_companies %}
+        <div class="top-company-row"><span class="company-rank">{{ "%02d"|format(loop.index) }}</span><span class="company-logo">{{ company["company_name"][:2]|upper }}</span><div><strong>{{ company["company_name"] }}</strong><small>{{ company["offer_count"] }} offer{{ "s" if company["offer_count"] != 1 else "" }} · Highest package {{ company["highest_package"]|round(1) }} LPA</small></div><i class="fa-solid fa-arrow-trend-up"></i></div>
+        {% else %}<div class="empty-state"><i class="fa-solid fa-building"></i><strong>No offer activity yet</strong><span>Top recruiting companies will appear after offers are recorded.</span></div>{% endfor %}
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+(() => {
+    const trigger = document.querySelector("#academicYearTrigger"), menu = document.querySelector("#academicYearMenu");
+    trigger.addEventListener("click", () => menu.classList.toggle("is-open"));
+    document.addEventListener("click", event => { if (!event.target.closest(".academic-year-picker")) menu.classList.remove("is-open"); });
+    document.querySelector("#exportAnalytics").addEventListener("click", () => {
+        const text = [...document.querySelectorAll(".analytics-card h2, .analytics-card p, .top-company-row")].map(item => item.innerText).join("\n");
+        const link = document.createElement("a"); link.href = URL.createObjectURL(new Blob([text], {type: "text/plain"})); link.download = "campuslink-analytics-{{ academic_year }}.txt"; link.click(); URL.revokeObjectURL(link.href);
+    });
+})();
+</script>
+{% endblock %}

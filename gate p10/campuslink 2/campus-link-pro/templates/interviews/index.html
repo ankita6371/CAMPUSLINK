@@ -1,0 +1,170 @@
+{% extends "base.html" %}
+
+{% block title %}Interviews | CAMPUSLINK{% endblock %}
+
+{% block content %}
+<div class="page-header interviews-header">
+    <div>
+        <div class="eyebrow"><i class="fa-solid fa-calendar-days"></i> Recruitment calendar</div>
+        <h1>Interviews</h1>
+        <p>Plan interview rounds, keep candidates informed, and track every outcome.</p>
+    </div>
+    <div class="page-header-actions">
+        <button class="btn btn-secondary" type="button" id="toggleInterviewCalendar">
+            <i class="fa-solid fa-calendar-days"></i> <span>Calendar view</span>
+        </button>
+        <button class="btn btn-primary" type="button" id="openInterviewModal">
+            <i class="fa-solid fa-plus"></i> Schedule interview
+        </button>
+    </div>
+</div>
+
+{% set total = interviews|length %}
+<div class="stats-grid interview-stats">
+    {% for label, value, icon, tone in [
+        ("Total interviews", total, "fa-calendar-check", "primary"),
+        ("Scheduled", status_counts.get("Scheduled", 0), "fa-clock", "info"),
+        ("Completed", status_counts.get("Completed", 0), "fa-circle-check", "success"),
+        ("Pending", status_counts.get("Pending", 0), "fa-hourglass-half", "warning")
+    ] %}
+    <div class="stat-card interview-stat">
+        <span class="stat-icon stat-icon-{{ tone }}"><i class="fa-solid {{ icon }}"></i></span>
+        <span><span class="stat-label">{{ label }}</span><strong class="stat-value">{{ value }}</strong></span>
+    </div>
+    {% endfor %}
+</div>
+
+<div class="content-card interview-calendar is-hidden" id="interviewCalendar">
+    <div class="card-header">
+        <div><h2>Interview calendar</h2><p>Click any scheduled interview to review its details.</p></div>
+        <button class="btn btn-quiet" type="button" id="closeInterviewCalendar">Close calendar</button>
+    </div>
+    <div class="calendar-grid">
+        {% for interview in interviews %}
+        <button class="calendar-event" type="button" data-row-id="interview-{{ interview['id'] }}">
+            <span class="calendar-event-date">{{ interview['interview_date'] }}</span>
+            <strong>{{ interview['interview_time'] }}</strong>
+            <span>{{ interview['student_name'] }} · {{ interview['round'] }}</span>
+            <small>{{ interview['company_name'] }}</small>
+        </button>
+        {% else %}
+        <div class="empty-state"><i class="fa-regular fa-calendar-xmark"></i><strong>No interviews scheduled</strong><span>Use Schedule interview to add the first event.</span></div>
+        {% endfor %}
+    </div>
+</div>
+
+<div class="content-card interview-card">
+    <div class="card-header interview-card-header">
+        <div><h2>Interview schedule</h2><p><span id="interviewCount">{{ total }}</span> interview records</p></div>
+        <span class="view-label"><span class="live-dot"></span> Live schedule</span>
+    </div>
+    <div class="interview-toolbar">
+        <label class="search-box interview-search"><i class="fa-solid fa-magnifying-glass"></i><input id="interviewSearch" type="search" placeholder="Search student, company, role or venue..." autocomplete="off"></label>
+        <select id="interviewStatusFilter" aria-label="Filter interviews by status">
+            <option value="">All statuses</option>
+            {% for status in ["Scheduled", "Pending", "Completed", "Cancelled"] %}<option value="{{ status }}">{{ status }}</option>{% endfor %}
+        </select>
+        <button class="btn btn-quiet" type="button" id="clearInterviewFilters">Clear filters</button>
+    </div>
+    <div class="table-container">
+        <table class="data-table interviews-table">
+            <thead><tr><th>Student</th><th>Company</th><th>Role</th><th>Round</th><th>Date</th><th>Time</th><th>Venue</th><th>Status</th><th>Action</th></tr></thead>
+            <tbody id="interviewRows">
+            {% for interview in interviews %}
+            <tr id="interview-{{ interview['id'] }}" data-search="{{ interview['student_name']|lower }} {{ interview['registration_no']|lower }} {{ interview['company_name']|lower }} {{ interview['role']|lower }} {{ interview['venue']|lower }}" data-status="{{ interview['status'] }}">
+                <td><div class="student-info"><span class="avatar">{{ interview['student_name'][:2]|upper }}</span><span><strong>{{ interview['student_name'] }}</strong><small>{{ interview['registration_no'] }} · {{ interview['student_branch'] }} · CGPA {{ "%.2f"|format(interview['student_cgpa']) }}</small></span></div></td>
+                <td><strong>{{ interview['company_name'] }}</strong></td>
+                <td>{{ interview['role'] }}{% if interview['package'] is not none %}<small class="company-name">{{ interview['package']|round(1) }} LPA</small>{% endif %}</td>
+                <td><span class="round-pill">{{ interview['round'] }}</span></td>
+                <td><span class="date-cell"><i class="fa-regular fa-calendar"></i>{{ interview['interview_date'] }}</span></td>
+                <td><span class="time-cell"><i class="fa-regular fa-clock"></i>{{ interview['interview_time'] }}</span></td>
+                <td><span class="venue-cell"><i class="fa-solid fa-location-dot"></i>{{ interview['venue'] }}</span></td>
+                <td><form method="POST" action="{{ url_for('update_interview', interview_id=interview['id']) }}"><select name="status" class="status-select status-{{ interview['status']|lower }}" aria-label="Update interview status"><option {% if interview['status'] == 'Scheduled' %}selected{% endif %}>Scheduled</option><option {% if interview['status'] == 'Pending' %}selected{% endif %}>Pending</option><option {% if interview['status'] == 'Completed' %}selected{% endif %}>Completed</option><option {% if interview['status'] == 'Cancelled' %}selected{% endif %}>Cancelled</option></select></form></td>
+                <td><div class="interview-row-actions"><a class="action-btn ai-camera-link" href="{{ url_for('ai_interview_practice', interview_id=interview['id']) }}" title="Open AI camera interview" aria-label="Open AI camera interview for {{ interview['student_name'] }}"><i class="fa-solid fa-video"></i></a><button class="action-btn calendar-focus" type="button" title="Show on calendar"><i class="fa-solid fa-calendar-day"></i></button></div></td>
+            </tr>
+            {% else %}
+            <tr><td colspan="9" class="empty-state"><i class="fa-regular fa-calendar-xmark"></i><strong>No interviews scheduled</strong><span>Schedule an interview to populate this workspace.</span></td></tr>
+            {% endfor %}
+            </tbody>
+        </table>
+        <div id="noInterviewResults" class="empty-state is-hidden"><i class="fa-solid fa-filter-circle-xmark"></i><strong>No matching interviews</strong><span>Try changing your search or status filter.</span></div>
+    </div>
+</div>
+
+<div class="content-card interview-process-card">
+    <div class="card-header"><div><h2>Interview workflow</h2><p>A clear path from first conversation to final decision.</p></div></div>
+    <div class="interview-workflow">
+        <div class="workflow-track" aria-hidden="true"></div>
+        <div class="workflow-stage">
+            <div class="workflow-step">01</div>
+            <div class="workflow-stage-body"><strong>Application screening</strong><span>Review eligibility, skills, and application details.</span></div>
+        </div>
+        <div class="workflow-stage">
+            <div class="workflow-step">02</div>
+            <div class="workflow-stage-body"><strong>Technical round</strong><span>Assess technical knowledge and problem-solving ability.</span></div>
+        </div>
+        <div class="workflow-stage">
+            <div class="workflow-step">03</div>
+            <div class="workflow-stage-body"><strong>HR round</strong><span>Evaluate communication, culture fit, and expectations.</span></div>
+        </div>
+        <div class="workflow-stage">
+            <div class="workflow-step">04</div>
+            <div class="workflow-stage-body"><strong>Final / managerial round</strong><span>Complete the final recruitment evaluation and approval.</span></div>
+        </div>
+        <div class="workflow-stage workflow-stage-final">
+            <div class="workflow-step">05</div>
+            <div class="workflow-stage-body"><strong>Selection and offer</strong><span>Confirm the selected candidate and begin offer processing.</span></div>
+        </div>
+    </div>
+</div>
+
+<div class="modal-backdrop" id="interviewModal" aria-hidden="true">
+    <div class="modal-card interview-modal" role="dialog" aria-modal="true" aria-labelledby="interviewModalTitle">
+        <div class="modal-heading"><div><span class="eyebrow">New calendar event</span><h2 id="interviewModalTitle">Schedule interview</h2></div><button class="modal-close" type="button" aria-label="Close"><i class="fa-solid fa-xmark"></i></button></div>
+        <form method="POST" action="{{ url_for('interviews') }}">
+            {% if selected_student_id %}<input type="hidden" name="return_to_student" value="{{ selected_student_id }}">{% endif %}
+            <div class="form-group"><label for="application_id">Candidate and job drive *</label><select id="application_id" name="application_id" required><option value="">Select an application</option>{% for application in applications %}<option value="{{ application['id'] }}" data-student="{{ application['student_id'] }}">{{ application['student_name'] }} · {{ application['company_name'] }} · {{ application['role'] }}</option>{% endfor %}</select></div>
+            <div class="form-grid"><div class="form-group"><label for="round">Round *</label><select id="round" name="round"><option>Technical</option><option>HR</option><option>Final</option><option>Managerial</option></select></div><div class="form-group"><label for="venue">Venue *</label><input id="venue" name="venue" placeholder="e.g. Seminar Hall" required></div></div>
+            <div class="form-grid"><div class="form-group"><label for="interview_date">Date *</label><input id="interview_date" name="interview_date" type="date" required></div><div class="form-group"><label for="interview_time">Time *</label><input id="interview_time" name="interview_time" type="time" required></div></div>
+            <div class="modal-actions"><button class="btn btn-secondary modal-cancel" type="button">Cancel</button><button class="btn btn-primary" type="submit"><i class="fa-solid fa-calendar-plus"></i> Schedule interview</button></div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+(() => {
+    const modal = document.querySelector("#interviewModal");
+    const calendar = document.querySelector("#interviewCalendar");
+    const open = () => { modal.classList.add("is-open"); modal.setAttribute("aria-hidden", "false"); document.querySelector("#application_id").focus(); };
+    const close = () => { modal.classList.remove("is-open"); modal.setAttribute("aria-hidden", "true"); };
+    document.querySelector("#openInterviewModal").addEventListener("click", open);
+    const studentId = new URLSearchParams(window.location.search).get("student_id");
+    if (studentId) {
+        const studentApplication = [...document.querySelector("#application_id").options]
+            .find(option => option.dataset.student === studentId);
+        if (studentApplication) {
+            studentApplication.selected = true;
+            open();
+        }
+    }
+    document.querySelectorAll(".modal-close, .modal-cancel").forEach(button => button.addEventListener("click", close));
+    modal.addEventListener("click", event => { if (event.target === modal) close(); });
+    const toggleCalendar = () => { calendar.classList.toggle("is-hidden"); if (!calendar.classList.contains("is-hidden")) calendar.scrollIntoView({behavior: "smooth", block: "start"}); };
+    document.querySelector("#toggleInterviewCalendar").addEventListener("click", toggleCalendar);
+    document.querySelector("#closeInterviewCalendar").addEventListener("click", () => calendar.classList.add("is-hidden"));
+    document.querySelectorAll(".calendar-event, .calendar-focus").forEach(control => control.addEventListener("click", () => {
+        const id = control.dataset.rowId || control.closest("tr").id;
+        calendar.classList.remove("is-hidden");
+        document.querySelector("#" + id)?.scrollIntoView({behavior: "smooth", block: "center"});
+    }));
+    const search = document.querySelector("#interviewSearch"), status = document.querySelector("#interviewStatusFilter");
+    const rows = [...document.querySelectorAll("#interviewRows tr[data-search]")], count = document.querySelector("#interviewCount"), empty = document.querySelector("#noInterviewResults");
+    const filter = () => { const query = search.value.trim().toLowerCase(); let visible = 0; rows.forEach(row => { const match = (!query || row.dataset.search.includes(query)) && (!status.value || row.dataset.status === status.value); row.hidden = !match; if (match) visible++; }); count.textContent = visible; empty.classList.toggle("is-hidden", visible > 0 || rows.length === 0); };
+    search.addEventListener("input", filter); status.addEventListener("change", filter);
+    document.querySelector("#clearInterviewFilters").addEventListener("click", () => { search.value = ""; status.value = ""; filter(); });
+    document.querySelectorAll(".status-select").forEach(select => select.addEventListener("change", () => select.form.submit()));
+})();
+</script>
+{% endblock %}

@@ -1,0 +1,114 @@
+{% extends "base.html" %}
+
+{% block title %}My Dashboard | CAMPUSLINK{% endblock %}
+
+{% block content %}
+<div class="page-header student-welcome">
+    <div>
+        <div class="eyebrow"><i class="fa-solid fa-graduation-cap"></i> Student workspace</div>
+        <h1>Welcome, {{ student['name'] }}</h1>
+        <p>{{ student['branch'] }}{% if student['registration_no'] %} · {{ student['registration_no'] }}{% endif %} · Your placement progress, in one place.</p>
+    </div>
+    <div class="student-dashboard-actions">
+        <span class="student-status-pill"><i class="fa-solid fa-circle"></i> {{ student['placement_status'] or 'Active student' }}</span>
+        <div class="student-quick-action">
+            <button
+                class="btn btn-primary student-quick-action-button"
+                type="button"
+                id="studentQuickActionButton"
+                aria-expanded="false"
+                aria-controls="studentQuickActionMenu"
+            >
+                <i class="fa-solid fa-bolt"></i>
+                Quick actions
+                <i class="fa-solid fa-chevron-down student-quick-action-chevron"></i>
+            </button>
+            <div class="student-quick-action-menu" id="studentQuickActionMenu" hidden>
+                <a href="{{ url_for('edit_resume', student_id=student['id']) }}">
+                    <i class="fa-solid fa-file-pen"></i>
+                    <span>{{ 'Update my resume' if summary['resume_status'] == 'Ready' else ('Manage my resume' if summary['resume_status'] == 'Uploaded' else 'Create my resume') }}</span>
+                </a>
+                {% if summary['resume_status'] == 'Ready' %}
+                <a href="{{ url_for('download_resume', student_id=student['id']) }}">
+                    <i class="fa-solid fa-download"></i>
+                    <span>Download built PDF</span>
+                </a>
+                {% elif summary['resume_status'] == 'Uploaded' %}
+                <a href="{{ url_for('download_original_resume', student_id=student['id']) }}">
+                    <i class="fa-solid fa-download"></i>
+                    <span>Download original resume</span>
+                </a>
+                {% endif %}
+                <a href="{{ url_for('mock_tests') }}">
+                    <i class="fa-solid fa-clipboard-question"></i>
+                    <span>Start a mock test</span>
+                </a>
+                <a href="{{ url_for('communication_inbox', student_id=student['id']) }}">
+                    <i class="fa-solid fa-comments"></i>
+                    <span>Open placement messages</span>
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="stats-grid student-stats">
+    <article class="stat-card"><span class="stat-icon stat-icon-primary"><i class="fa-solid fa-file-signature"></i></span><span><span class="stat-label">My applications</span><strong class="stat-value">{{ summary['applications'] or 0 }}</strong></span></article>
+    <article class="stat-card"><span class="stat-icon stat-icon-success"><i class="fa-solid fa-clipboard-check"></i></span><span><span class="stat-label">Tests completed</span><strong class="stat-value">{{ summary['completed_tests'] or 0 }}</strong></span></article>
+    <article class="stat-card"><span class="stat-icon stat-icon-info"><i class="fa-solid fa-file-lines"></i></span><span><span class="stat-label">Resume status</span><strong class="student-stat-text">{{ summary['resume_status'] or 'Needs generation' }}</strong></span></article>
+    <article class="stat-card"><span class="stat-icon stat-icon-warning"><i class="fa-solid fa-envelope"></i></span><span><span class="stat-label">Unread messages</span><strong class="stat-value">{{ unread_count }}</strong></span></article>
+</div>
+
+<section class="student-quick-section">
+    <div class="student-section-heading"><div><span class="eyebrow">Your next step</span><h2>Continue your preparation</h2></div></div>
+    <div class="student-quick-grid">
+        <a class="student-quick-card" href="{{ url_for('edit_resume', student_id=student['id']) }}">
+            <span class="student-quick-icon quick-indigo"><i class="fa-solid fa-file-pen"></i></span>
+            <span><strong>{{ 'Manage your resume' if summary['resume_status'] == 'Uploaded' else 'Build your resume' }}</strong><small>{{ 'Review and download your professional resume.' if summary['resume_status'] == 'Ready' else ('Your uploaded resume is available. You can also build a formatted PDF.' if summary['resume_status'] == 'Uploaded' else 'Complete your profile and create a downloadable resume.') }}</small></span>
+            <i class="fa-solid fa-arrow-right student-quick-arrow"></i>
+        </a>
+        <a class="student-quick-card" href="{{ url_for('mock_tests') }}">
+            <span class="student-quick-icon quick-blue"><i class="fa-solid fa-clipboard-question"></i></span>
+            <span><strong>Practice mock tests</strong><small>{{ summary['tests'] }} saved attempt{{ '' if summary['tests'] == 1 else 's' }} · fresh randomized questions</small></span>
+            <i class="fa-solid fa-arrow-right student-quick-arrow"></i>
+        </a>
+        <a class="student-quick-card" href="{{ url_for('communication_inbox', student_id=student['id']) }}">
+            <span class="student-quick-icon quick-amber"><i class="fa-solid fa-comments"></i></span>
+            <span><strong>Placement messages</strong><small>{{ unread_count }} unread · ask the placement team a question</small></span>
+            <i class="fa-solid fa-arrow-right student-quick-arrow"></i>
+        </a>
+    </div>
+</section>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+    const button = document.getElementById("studentQuickActionButton");
+    const menu = document.getElementById("studentQuickActionMenu");
+    if (!button || !menu) return;
+
+    function setMenuOpen(open) {
+        menu.hidden = !open;
+        button.setAttribute("aria-expanded", String(open));
+    }
+
+    button.addEventListener("click", function () {
+        setMenuOpen(menu.hidden);
+    });
+
+    document.addEventListener("click", function (event) {
+        if (!button.contains(event.target) && !menu.contains(event.target)) {
+            setMenuOpen(false);
+        }
+    });
+
+    document.addEventListener("keydown", function (event) {
+        if (event.key === "Escape") {
+            setMenuOpen(false);
+            button.focus();
+        }
+    });
+});
+</script>
+{% endblock %}

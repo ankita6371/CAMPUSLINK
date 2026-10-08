@@ -1,0 +1,106 @@
+{% extends "base.html" %}
+
+{% block title %}{{ attempt['category'] }} Mock Test | CAMPUSLINK{% endblock %}
+
+{% block content %}
+<div class="page-header mock-attempt-header">
+    <div>
+        <div class="eyebrow"><i class="fa-solid fa-clipboard-question"></i> {{ attempt['category'] }} practice</div>
+        <h1>{{ "Test results" if submitted else "Mock test" }}</h1>
+        <p>{{ attempt['student_name'] }} · {{ attempt['registration_no'] }} · {{ attempt['branch'] }}</p>
+    </div>
+    <div class="page-header-actions">
+        <a href="{{ url_for('mock_tests', student_id=attempt['student_id'], category=attempt['category']) }}" class="btn btn-secondary"><i class="fa-solid fa-arrow-rotate-right"></i> New randomized test</a>
+        <a href="{{ url_for('mock_tests') }}" class="btn btn-secondary">All mock tests</a>
+    </div>
+</div>
+
+{% with messages = get_flashed_messages(with_categories=true) %}
+{% if messages %}
+<div class="certificate-alert-list" aria-live="polite">
+    {% for category, message in messages %}
+    <div class="certificate-alert certificate-alert-{{ category }}"><i class="fa-solid {{ 'fa-circle-check' if category == 'success' else 'fa-circle-exclamation' }}"></i><span>{{ message }}</span></div>
+    {% endfor %}
+</div>
+{% endif %}
+{% endwith %}
+
+{% if submitted %}
+<section class="mock-result-hero">
+    <span class="mock-result-icon {{ 'mock-result-pass' if percentage >= 70 else 'mock-result-review' }}"><i class="fa-solid {{ 'fa-trophy' if percentage >= 70 else 'fa-book-open' }}"></i></span>
+    <div><span class="eyebrow">Attempt #{{ attempt['id'] }} · {{ attempt['category'] }}</span><h2>{{ attempt['score'] }} <small>/ {{ attempt['total_questions'] }}</small></h2><p>{{ percentage }}% correct · {{ "Strong result — keep practicing." if percentage >= 70 else "Review the explanations and try another question set." }}</p></div>
+    <div class="mock-result-ring" style="--score: {{ percentage }}%"><strong>{{ percentage }}%</strong><span>score</span></div>
+</section>
+{% else %}
+<section class="mock-attempt-progress">
+    <div><span class="mock-test-category-pill">{{ attempt['category'] }}</span><strong>{{ questions|length }} questions</strong><span>Choose one answer for each question, then submit.</span></div>
+    <div class="mock-answer-progress"><span id="answeredCount">0</span> / {{ questions|length }} answered</div>
+</section>
+{% endif %}
+
+<form class="mock-question-form" method="POST" action="{{ url_for('view_mock_test', attempt_id=attempt['id']) }}">
+    {% for question in questions %}
+    <article class="content-card mock-question-card {{ 'mock-question-correct' if submitted and question['is_correct'] else 'mock-question-incorrect' if submitted else '' }}">
+        <div class="mock-question-heading">
+            <span class="mock-question-number">{{ "%02d"|format(loop.index) }}</span>
+            <span class="mock-question-label">Question {{ loop.index }} <small>· 1 point</small></span>
+            {% if submitted %}<span class="mock-answer-result {{ 'is-correct' if question['is_correct'] else 'is-incorrect' }}"><i class="fa-solid {{ 'fa-circle-check' if question['is_correct'] else 'fa-circle-xmark' }}"></i>{{ "Correct" if question['is_correct'] else "Review" }}</span>{% endif %}
+        </div>
+        <h2>{{ question['question'] }}</h2>
+        <div class="mock-option-list">
+            {% for option in question['options'] %}
+            {% set option_key = "ABCD"[loop.index0] %}
+            {% if submitted %}
+            <div class="mock-option mock-option-result
+                        {{ 'is-selected' if question['selected_option'] == option_key else '' }}
+                        {{ 'is-answer' if question['correct_option'] == option_key else '' }}">
+                <span class="mock-option-letter">{{ option_key }}</span>
+                <span>{{ option }}</span>
+                {% if question['correct_option'] == option_key %}<i class="fa-solid fa-check"></i>{% elif question['selected_option'] == option_key %}<i class="fa-solid fa-xmark"></i>{% endif %}
+            </div>
+            {% else %}
+            <label class="mock-option">
+                <input type="radio" name="question_{{ question['id'] }}" value="{{ option_key }}">
+                <span class="mock-option-letter">{{ option_key }}</span>
+                <span>{{ option }}</span>
+            </label>
+            {% endif %}
+            {% endfor %}
+        </div>
+        {% if submitted %}<div class="mock-explanation"><i class="fa-solid fa-lightbulb"></i><p><strong>Explanation</strong><br>{{ question['explanation'] }}</p></div>{% endif %}
+    </article>
+    {% endfor %}
+
+    {% if not submitted %}
+    <div class="mock-submit-bar">
+        <span><i class="fa-solid fa-circle-info"></i> Unanswered questions are scored as incorrect.</span>
+        <button class="btn btn-primary" type="submit"><i class="fa-solid fa-paper-plane"></i> Submit test</button>
+    </div>
+    {% else %}
+    <div class="mock-submit-bar"><span>Results are saved to this student's test history.</span><a class="btn btn-primary" href="{{ url_for('mock_tests', student_id=attempt['student_id'], category=attempt['category']) }}"><i class="fa-solid fa-shuffle"></i> Try a new question set</a></div>
+    {% endif %}
+</form>
+{% endblock %}
+
+{% block extra_js %}
+{% if not submitted %}
+<script>
+(() => {
+    const radios = [...document.querySelectorAll(".mock-option input[type='radio']")];
+    const count = document.querySelector("#answeredCount");
+    const update = () => {
+        const answered = new Set(radios.filter(radio => radio.checked).map(radio => radio.name)).size;
+        count.textContent = answered;
+    };
+    radios.forEach(radio => radio.addEventListener("change", () => {
+        radio.closest(".mock-option-list").querySelectorAll(".mock-option").forEach(option => option.classList.remove("is-selected"));
+        radio.closest(".mock-option").classList.add("is-selected");
+        update();
+    }));
+    document.querySelector(".mock-question-form").addEventListener("submit", event => {
+        if (!confirm("Submit this test and view your score? You cannot change answers after submission.")) event.preventDefault();
+    });
+})();
+</script>
+{% endif %}
+{% endblock %}

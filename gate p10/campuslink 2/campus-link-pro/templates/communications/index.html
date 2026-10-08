@@ -1,0 +1,193 @@
+{% extends "base.html" %}
+
+{% block title %}Communications | CAMPUSLINK{% endblock %}
+
+{% block content %}
+<div class="page-header communication-page-header">
+    <div>
+        <div class="eyebrow"><i class="fa-solid fa-bullhorn"></i> Centralized communication</div>
+        <h1>Communications</h1>
+        <p>Send placement updates to all students, a branch, or an individual student.</p>
+    </div>
+</div>
+
+{% with messages = get_flashed_messages(with_categories=true) %}
+{% if messages %}
+<div class="certificate-alert-list" aria-live="polite">
+    {% for category, message in messages %}
+    <div class="certificate-alert certificate-alert-{{ category }}">
+        <i class="fa-solid {{ 'fa-circle-check' if category == 'success' else 'fa-circle-exclamation' }}"></i>
+        <span>{{ message }}</span>
+    </div>
+    {% endfor %}
+</div>
+{% endif %}
+{% endwith %}
+
+<div class="stats-grid communication-stats">
+    <div class="stat-card"><span class="stat-icon stat-icon-primary"><i class="fa-solid fa-paper-plane"></i></span><span><span class="stat-label">Messages sent</span><strong class="stat-value">{{ messages|length }}</strong></span></div>
+    <div class="stat-card"><span class="stat-icon stat-icon-info"><i class="fa-solid fa-users"></i></span><span><span class="stat-label">Students in directory</span><strong class="stat-value">{{ total_students }}</strong></span></div>
+    <div class="stat-card"><span class="stat-icon stat-icon-success"><i class="fa-solid fa-envelope-open-text"></i></span><span><span class="stat-label">Unread deliveries</span><strong class="stat-value">{{ unread_by_student.values()|sum }}</strong></span></div>
+    <div class="stat-card"><span class="stat-icon stat-icon-warning"><i class="fa-solid fa-comments"></i></span><span><span class="stat-label">Student questions</span><strong class="stat-value">{{ unanswered_count }}</strong></span></div>
+</div>
+
+<div class="communication-layout">
+    <section class="content-card communication-compose-card">
+        <div class="card-header">
+            <div><span class="section-kicker">COMPOSE</span><h2>Send a placement update</h2><p>Messages appear in the selected students’ CAMPUSLINK inbox and notification count.</p></div>
+            <span class="communication-compose-icon"><i class="fa-solid fa-pen-to-square"></i></span>
+        </div>
+        <form method="POST" action="{{ url_for('communications') }}" id="communication-form">
+            <div class="form-group">
+                <label for="communication-title">Subject *</label>
+                <input id="communication-title" name="title" type="text" maxlength="120" required placeholder="e.g. Interview preparation session on Friday">
+            </div>
+            <div class="communication-form-row">
+                <div class="form-group">
+                    <label for="communication-category">Category</label>
+                    <select id="communication-category" name="category">
+                        {% for category in ['Announcement', 'Opportunity', 'Deadline', 'Interview', 'General'] %}
+                        <option value="{{ category }}">{{ category }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="communication-audience">Send to *</label>
+                    <select id="communication-audience" name="audience_type" required>
+                        <option value="all">All students</option>
+                        <option value="branch">One branch</option>
+                        <option value="student">One student</option>
+                    </select>
+                </div>
+            </div>
+            <div class="form-group communication-target-field" id="branch-target-field" hidden>
+                <label for="communication-branch">Branch *</label>
+                <select id="communication-branch" name="target_branch">
+                    <option value="">Choose branch</option>
+                    {% for branch in branches %}<option value="{{ branch['branch'] }}">{{ branch['branch'] }}</option>{% endfor %}
+                </select>
+            </div>
+            <div class="form-group communication-target-field" id="student-target-field" hidden>
+                <label for="communication-student">Student *</label>
+                <select id="communication-student" name="target_student_id">
+                    <option value="">Choose student</option>
+                    {% for student in students %}
+                    <option value="{{ student['id'] }}">{{ student['name'] }} · {{ student['registration_no'] }} · {{ student['branch'] }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="communication-body">Message *</label>
+                <textarea id="communication-body" name="body" rows="7" maxlength="4000" required placeholder="Write a clear update with any dates, instructions, or next steps…"></textarea>
+                <small class="communication-help">Up to 4,000 characters. Messages are stored in CAMPUSLINK and shown in the recipient’s inbox.</small>
+            </div>
+            <div class="communication-form-actions">
+                <span><i class="fa-solid fa-lock"></i> In-app delivery · no email or SMS is sent</span>
+                <button class="btn btn-primary" type="submit"><i class="fa-solid fa-paper-plane"></i> Send message</button>
+            </div>
+        </form>
+    </section>
+
+    <aside class="content-card communication-guide-card">
+        <span class="section-kicker">DELIVERY GUIDE</span>
+        <h2>One place for placement updates</h2>
+        <ul>
+            <li><i class="fa-solid fa-check"></i><span><strong>Choose the audience</strong><small>Broadcast to all students, target a branch, or message one student.</small></span></li>
+            <li><i class="fa-solid fa-check"></i><span><strong>Receive student questions</strong><small>Students can reply to any announcement from their inbox. Conversations stay private to each student.</small></span></li>
+            <li><i class="fa-solid fa-check"></i><span><strong>Reply from one place</strong><small>Read and answer student questions below; open threads are counted until an officer responds.</small></span></li>
+        </ul>
+        <p class="communication-delivery-note"><i class="fa-solid fa-circle-info"></i> This local app does not send email, SMS, or operating-system push notifications.</p>
+    </aside>
+</div>
+
+<section class="content-card communication-log-card communication-conversations">
+    <div class="card-header">
+        <div><span class="section-kicker">TWO-WAY COMMUNICATION</span><h2>Student conversations</h2><p>Private reply threads attached to the original placement update.</p></div>
+        <span class="conversation-open-count {% if unanswered_count %}has-open-threads{% endif %}"><i class="fa-solid fa-circle"></i>{{ unanswered_count }} awaiting reply</span>
+    </div>
+    <div class="communication-thread-list">
+        {% for thread in conversation_threads %}
+        <article class="communication-thread {% if thread['awaiting_officer'] %}is-awaiting-officer{% endif %}">
+            <div class="communication-thread-header">
+                <div>
+                    <span class="communication-category communication-category-{{ thread['category']|lower }}">{{ thread['category'] }}</span>
+                    <h3>{{ thread['student_name'] }}</h3>
+                    <small>{{ thread['registration_no'] }} · {{ thread['title'] }}</small>
+                </div>
+                {% if thread['awaiting_officer'] %}
+                <span class="thread-status thread-status-open"><i class="fa-solid fa-reply"></i> Reply needed</span>
+                {% else %}
+                <span class="thread-status thread-status-answered"><i class="fa-solid fa-check"></i> Replied</span>
+                {% endif %}
+            </div>
+            <div class="thread-original-message"><strong>Original placement update</strong><p>{{ thread['original_body'] }}</p></div>
+            <div class="communication-thread-messages">
+                {% for reply in thread['replies'] %}
+                <div class="communication-thread-reply {% if reply['sender_type'] == 'student' %}from-student{% else %}from-officer{% endif %}">
+                    <div class="thread-reply-heading"><strong>{{ 'Student · ' ~ thread['student_name'] if reply['sender_type'] == 'student' else 'Placement officer' }}</strong><time>{{ reply['created_at'][:16] if reply['created_at'] else "—" }}</time></div>
+                    <p>{{ reply['body'] }}</p>
+                </div>
+                {% endfor %}
+            </div>
+            <form class="communication-reply-form" method="POST" action="{{ url_for('reply_to_student', communication_id=thread['communication_id'], student_id=thread['student_id']) }}">
+                <label class="sr-only" for="officer-reply-{{ thread['communication_id'] }}-{{ thread['student_id'] }}">Reply to {{ thread['student_name'] }}</label>
+                <textarea id="officer-reply-{{ thread['communication_id'] }}-{{ thread['student_id'] }}" name="body" rows="2" maxlength="4000" required placeholder="Write a helpful reply to {{ thread['student_name'] }}…"></textarea>
+                <button class="btn btn-primary btn-sm" type="submit"><i class="fa-solid fa-paper-plane"></i> Send reply</button>
+            </form>
+        </article>
+        {% else %}
+        <div class="empty-state"><i class="fa-regular fa-comments"></i><strong>No student questions yet</strong><span>Student replies to placement messages will appear here for the placement officer.</span></div>
+        {% endfor %}
+    </div>
+</section>
+
+<section class="content-card communication-log-card">
+    <div class="card-header"><div><span class="section-kicker">MESSAGE HISTORY</span><h2>Sent communications</h2><p>Messages remain available to recipients in their student inbox.</p></div></div>
+    <div class="table-container">
+        <table class="data-table communication-table">
+            <thead><tr><th>Subject</th><th>Category</th><th>Audience</th><th>Recipients</th><th>Read</th><th>Sent</th><th></th></tr></thead>
+            <tbody>
+                {% for message in messages %}
+                <tr>
+                    <td><strong>{{ message['title'] }}</strong><small class="communication-message-preview">{{ message['body'] }}</small></td>
+                    <td><span class="communication-category communication-category-{{ message['category']|lower }}">{{ message['category'] }}</span></td>
+                    <td>{{ message['audience_label'] }}</td>
+                    <td>{{ message['recipient_count'] }}</td>
+                    <td>{{ message['read_count'] }} / {{ message['recipient_count'] }}</td>
+                    <td>{{ message['created_at'][:16] if message['created_at'] else "—" }}</td>
+                    <td>
+                        {% if message['audience_type'] == 'student' %}
+                        <a class="btn btn-secondary btn-sm" href="{{ url_for('communication_inbox', student_id=message['target_student_id']) }}">Open inbox</a>
+                        {% else %}
+                        <a class="btn btn-secondary btn-sm" href="{{ url_for('students') }}">Browse student inboxes</a>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% else %}
+                <tr><td colspan="7" class="empty-state"><i class="fa-solid fa-inbox"></i><strong>No messages sent yet</strong><span>Compose a placement update to start your communication history.</span></td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</section>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+    const audience = document.getElementById("communication-audience");
+    const branchField = document.getElementById("branch-target-field");
+    const studentField = document.getElementById("student-target-field");
+    const branch = document.getElementById("communication-branch");
+    const student = document.getElementById("communication-student");
+    function updateAudienceFields() {
+        branchField.hidden = audience.value !== "branch";
+        studentField.hidden = audience.value !== "student";
+        branch.required = audience.value === "branch";
+        student.required = audience.value === "student";
+    }
+    audience.addEventListener("change", updateAudienceFields);
+    updateAudienceFields();
+});
+</script>
+{% endblock %}

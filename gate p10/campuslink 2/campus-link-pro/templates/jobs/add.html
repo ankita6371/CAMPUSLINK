@@ -1,0 +1,301 @@
+{% extends "base.html" %}
+
+{% block title %}Add Job Drive | CAMPUSLINK{% endblock %}
+
+{% block content %}
+
+<div class="page-header">
+
+    <div>
+        <h1>Add Job Drive</h1>
+        <p>Create a new campus recruitment opportunity.</p>
+    </div>
+
+    <div class="page-actions">
+
+        <a
+            href="{{ url_for('jobs') }}"
+            class="btn btn-secondary"
+        >
+            <i class="fa-solid fa-arrow-left"></i>
+            Back to Job Drives
+        </a>
+
+    </div>
+
+</div>
+
+
+<div class="content-card">
+
+    <div class="section-header">
+
+        <div>
+            <h2>Job Drive Information</h2>
+            <p>Enter the recruitment and eligibility requirements.</p>
+        </div>
+
+    </div>
+
+
+    <form method="POST">
+
+        <div class="form-grid">
+
+            
+
+            <div class="form-group">
+
+                <label for="company_id">
+                    Company *
+                </label>
+
+                <select
+                    id="company_id"
+                    name="company_id"
+                    required
+                >
+
+                    <option value="">
+                        Select company
+                    </option>
+
+                    {% for company in companies %}
+
+                    <option value="{{ company['id'] }}">
+                        {{ company['name'] }}
+                    </option>
+
+                    {% endfor %}
+
+                </select>
+
+            </div>
+
+
+            
+
+            <div class="form-group">
+
+                <label for="role">
+                    Job Role *
+                </label>
+
+                <input
+                    type="text"
+                    id="role"
+                    name="role"
+                    placeholder="e.g. Software Engineer"
+                    required
+                >
+
+            </div>
+
+
+            
+
+            <div class="form-group">
+
+                <label for="package">
+                    Package (LPA)
+                </label>
+
+                <input
+                    type="number"
+                    id="package"
+                    name="package"
+                    step="0.01"
+                    min="0"
+                    placeholder="e.g. 7.50"
+                >
+
+            </div>
+
+
+            
+
+            <div class="form-group">
+
+                <label for="min_cgpa">
+                    Minimum CGPA
+                </label>
+
+                <input
+                    type="number"
+                    id="min_cgpa"
+                    name="min_cgpa"
+                    step="0.01"
+                    min="0"
+                    max="10"
+                    placeholder="e.g. 6.50"
+                >
+
+            </div>
+
+
+            
+
+            <div class="form-group">
+
+                <label for="max_backlogs">
+                    Maximum Backlogs
+                </label>
+
+                <input
+                    type="number"
+                    id="max_backlogs"
+                    name="max_backlogs"
+                    min="0"
+                    placeholder="e.g. 0"
+                >
+
+            </div>
+
+
+            
+
+            <div class="form-group">
+
+                <label for="min_attendance">
+                    Minimum Attendance (%)
+                </label>
+
+                <input
+                    type="number"
+                    id="min_attendance"
+                    name="min_attendance"
+                    step="0.1"
+                    min="0"
+                    max="100"
+                    placeholder="e.g. 75"
+                >
+
+            </div>
+
+
+            
+
+            <div class="form-group">
+
+                <label for="eligible_branches">
+                    Eligible Branches
+                </label>
+
+                <input
+                    type="text"
+                    id="eligible_branches"
+                    name="eligible_branches"
+                    placeholder="CSE, IT, ECE"
+                >
+
+            </div>
+
+
+            
+
+            <div class="form-group">
+
+                <label for="required_skills">
+                    Required Skills
+                </label>
+
+                <input
+                    type="text"
+                    id="required_skills"
+                    name="required_skills"
+                    placeholder="Python, SQL, Java"
+                >
+
+            </div>
+
+
+            
+
+            <div class="form-group">
+
+                <label for="application_deadline">
+                    Application Deadline
+                </label>
+
+                <input
+                    type="date"
+                    id="application_deadline"
+                    name="application_deadline"
+                >
+
+            </div>
+
+
+            
+
+            <div class="form-group">
+
+                <label for="drive_date">
+                    Drive Date
+                </label>
+
+                <input
+                    type="date"
+                    id="drive_date"
+                    name="drive_date"
+                >
+
+            </div>
+
+
+            
+
+            <div class="form-group">
+
+                <label for="status">
+                    Status
+                </label>
+
+                <select
+                    id="status"
+                    name="status"
+                >
+
+                    <option value="Active">
+                        Active
+                    </option>
+
+                    <option value="Upcoming">
+                        Upcoming
+                    </option>
+
+                    <option value="Closed">
+                        Closed
+                    </option>
+
+                </select>
+
+            </div>
+
+        </div>
+
+
+        <div class="form-actions">
+
+            <a
+                href="{{ url_for('jobs') }}"
+                class="btn btn-secondary"
+            >
+                Cancel
+            </a>
+
+            <button
+                type="submit"
+                class="btn btn-primary"
+            >
+                <i class="fa-solid fa-plus"></i>
+                Add Job Drive
+            </button>
+
+        </div>
+
+    </form>
+
+</div>
+
+{% endblock %}

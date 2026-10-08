@@ -1,0 +1,149 @@
+{% extends "base.html" %}
+
+{% block title %}Project Requirements | CAMPUSLINK{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/requirements.css') }}">
+{% endblock %}
+
+{% block content %}
+<div class="requirements-page">
+    <header class="requirements-hero">
+        <div class="requirements-hero-copy">
+            <span class="requirements-eyebrow"><i class="fa-solid fa-layer-group"></i> Project specification</span>
+            <h1>CAMPUSLINK requirements</h1>
+            <p>A concise view of the capabilities CAMPUSLINK provides and the quality standards the system is designed to meet.</p>
+        </div>
+        <div class="requirements-hero-mark" aria-hidden="true">
+            <i class="fa-solid fa-clipboard-check"></i>
+        </div>
+    </header>
+
+    <div class="requirements-summary">
+        <article class="requirements-summary-card">
+            <span class="requirements-summary-icon summary-indigo"><i class="fa-solid fa-list-check"></i></span>
+            <span><strong>Functional</strong><small>What the system must do</small></span>
+            <b>12</b>
+        </article>
+        <article class="requirements-summary-card">
+            <span class="requirements-summary-icon summary-blue"><i class="fa-solid fa-shield-halved"></i></span>
+            <span><strong>Non-functional</strong><small>How the system should perform</small></span>
+            <b>8</b>
+        </article>
+        <article class="requirements-summary-card">
+            <span class="requirements-summary-icon summary-green"><i class="fa-solid fa-users"></i></span>
+            <span><strong>Primary roles</strong><small>Administrator, officer, student</small></span>
+            <b>3</b>
+        </article>
+    </div>
+
+    <section class="requirements-section" aria-labelledby="functional-heading">
+        <div class="requirements-section-heading">
+            <span class="requirements-section-icon functional-icon"><i class="fa-solid fa-gears"></i></span>
+            <div>
+                <span class="requirements-eyebrow">System capabilities</span>
+                <h2 id="functional-heading">Functional requirements</h2>
+                <p>Features and user-visible behavior the application must provide.</p>
+            </div>
+        </div>
+
+        <div class="functional-requirements">
+            <article class="requirement-card">
+                <span class="requirement-id">FR-01</span>
+                <div><h3>Authentication and role access</h3><p>The system shall allow authorized users to sign in and sign out, assign administrator, placement officer, and student roles, and restrict pages and actions according to role.</p><span class="requirement-tag">Access control</span></div>
+            </article>
+            <article class="requirement-card">
+                <span class="requirement-id">FR-02</span>
+                <div><h3>Student records</h3><p>Placement staff shall create, view, update, search, and manage student profiles, including academic details, branch, skills, placement status, and certificates.</p><span class="requirement-tag">Student management</span></div>
+            </article>
+            <article class="requirement-card">
+                <span class="requirement-id">FR-03</span>
+                <div><h3>Company and recruiting partner records</h3><p>Placement staff shall maintain company profiles, locations, recruiting information, and the roles and skills requested by each company.</p><span class="requirement-tag">Recruiter management</span></div>
+            </article>
+            <article class="requirement-card">
+                <span class="requirement-id">FR-04</span>
+                <div><h3>Job drives and eligibility</h3><p>The system shall record drive dates, application deadlines, required skills, eligibility rules, and determine whether drives are upcoming, active, or closed from their dates.</p><span class="requirement-tag">Drive lifecycle</span></div>
+            </article>
+            <article class="requirement-card">
+                <span class="requirement-id">FR-05</span>
+                <div><h3>Candidate matching and skill gaps</h3><p>The system shall compare student profiles with drive criteria, show explainable match results, identify each candidate’s missing required skills, and recommend relevant skill development.</p><span class="requirement-tag">Candidate matching</span></div>
+            </article>
+            <article class="requirement-card">
+                <span class="requirement-id">FR-06</span>
+                <div><h3>Applications and interviews</h3><p>Placement staff shall record and track student applications, selection progress, interview schedules, interview status, and related outcomes.</p><span class="requirement-tag">Placement workflow</span></div>
+            </article>
+            <article class="requirement-card">
+                <span class="requirement-id">FR-07</span>
+                <div><h3>Resume creation and download</h3><p>Students shall maintain their own resume information, see whether it needs generation or is ready, and download a generated resume when required sections are complete.</p><span class="requirement-tag">Student self-service</span></div>
+            </article>
+            <article class="requirement-card">
+                <span class="requirement-id">FR-08</span>
+                <div><h3>Mock tests</h3><p>Students shall start category-based mock tests, answer randomized question sets, submit attempts, and review saved results and explanations.</p><span class="requirement-tag">Practice and assessment</span></div>
+            </article>
+            <article class="requirement-card">
+                <span class="requirement-id">FR-09</span>
+                <div><h3>Interview practice</h3><p>Students shall access interview preparation and practice features associated with their placement opportunities.</p><span class="requirement-tag">Career preparation</span></div>
+            </article>
+            <article class="requirement-card">
+                <span class="requirement-id">FR-10</span>
+                <div><h3>Offers and placement outcomes</h3><p>Placement staff shall record offers, update offer decisions, and review placement outcome summaries.</p><span class="requirement-tag">Offer tracking</span></div>
+            </article>
+            <article class="requirement-card">
+                <span class="requirement-id">FR-11</span>
+                <div><h3>Centralized communications</h3><p>Placement staff shall send announcements to the intended audience; students shall read messages and ask questions in private threads; staff shall reply and track responses.</p><span class="requirement-tag">Messaging</span></div>
+            </article>
+            <article class="requirement-card">
+                <span class="requirement-id">FR-12</span>
+                <div><h3>Dashboard, notifications, analytics, and reports</h3><p>The system shall summarize placement activity, notify staff of relevant workflow updates, provide analytics, and allow placement reports to be viewed or exported.</p><span class="requirement-tag">Insights and reporting</span></div>
+            </article>
+        </div>
+    </section>
+
+    <section class="requirements-section" aria-labelledby="nonfunctional-heading">
+        <div class="requirements-section-heading">
+            <span class="requirements-section-icon quality-icon"><i class="fa-solid fa-shield-heart"></i></span>
+            <div>
+                <span class="requirements-eyebrow">Quality attributes</span>
+                <h2 id="nonfunctional-heading">Non-functional requirements</h2>
+                <p>Standards for security, usability, reliability, and operating the system.</p>
+            </div>
+        </div>
+
+        <div class="quality-requirements">
+            <article class="quality-card">
+                <span class="quality-number">01</span>
+                <div><h3>Security and privacy</h3><p>Passwords shall be stored as one-way hashes. Authenticated routes shall enforce role permissions, and student-specific records shall only be accessible to their owner and authorized staff.</p><span class="quality-label">Security</span></div>
+            </article>
+            <article class="quality-card">
+                <span class="quality-number">02</span>
+                <div><h3>Performance</h3><p>On the intended deployment, normal page requests should complete within 3 seconds under typical campus usage. Long-running exports should provide a clear download response.</p><span class="quality-label">Response time target</span></div>
+            </article>
+            <article class="quality-card">
+                <span class="quality-number">03</span>
+                <div><span><h3>Ease of use</h3><p>Common placement tasks should use clear labels, validation feedback, consistent navigation, and responsive layouts for desktop, tablet, and mobile screens.</p><span class="quality-label">Usability</span></span></div>
+            </article>
+            <article class="quality-card">
+                <span class="quality-number">04</span>
+                <div><h3>Reliability and data integrity</h3><p>Record updates shall be validated and persisted consistently. Failed database operations shall report an error without showing a success state.</p><span class="quality-label">Reliability</span></div>
+            </article>
+            <article class="quality-card">
+                <span class="quality-number">05</span>
+                <div><h3>Accessibility</h3><p>Controls should be keyboard operable, labeled for assistive technology, and maintain readable contrast and visible focus indicators.</p><span class="quality-label">Accessibility target</span></div>
+            </article>
+            <article class="quality-card">
+                <span class="quality-number">06</span>
+                <div><h3>Compatibility</h3><p>The application should work in current mainstream desktop and mobile browsers and adapt to commonly used screen widths.</p><span class="quality-label">Browser support</span></div>
+            </article>
+            <article class="quality-card">
+                <span class="quality-number">07</span>
+                <div><h3>Maintainability</h3><p>Application logic, database access, templates, and styling should remain organized into understandable modules so features can be tested and updated safely.</p><span class="quality-label">Maintainability</span></div>
+            </article>
+            <article class="quality-card">
+                <span class="quality-number">08</span>
+                <div><h3>Backup and recovery</h3><p>Production operators should back up the database regularly and verify that a backup can be restored before relying on it for recovery.</p><span class="quality-label">Operations</span></div>
+            </article>
+        </div>
+        <p class="requirements-note"><i class="fa-solid fa-circle-info"></i> Performance and accessibility values above are project targets; verify them on the final deployment and assistive-technology setup.</p>
+    </section>
+</div>
+{% endblock %}

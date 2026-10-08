@@ -1,0 +1,599 @@
+{% extends "base.html" %}
+
+{% block title %}Companies | CAMPUSLINK{% endblock %}
+
+{% block content %}
+
+<div class="companies-page">
+
+    
+
+    <div class="page-header">
+
+        <div>
+            <h1>Companies</h1>
+            <p>Manage recruiting companies and placement partners.</p>
+        </div>
+
+        <div class="page-actions">
+
+            <a
+                href="{{ url_for('add_company') }}"
+                class="btn btn-primary"
+            >
+                + Add Company
+            </a>
+
+        </div>
+
+    </div>
+
+
+    
+
+    <div class="stats-grid">
+
+        <div class="stat-card company-stat-card">
+
+            <div class="stat-icon">
+                🏢
+            </div>
+
+            <div>
+                <span class="stat-label">
+                    Total Companies
+                </span>
+
+                <h2>
+                    {{ total_companies }}
+                </h2>
+                <small class="company-stat-caption">All companies registered in CAMPUSLINK</small>
+            </div>
+
+        </div>
+
+
+        <div class="stat-card company-stat-card">
+
+            <div class="stat-icon">
+                💼
+            </div>
+
+            <div>
+                <span class="stat-label">
+                    Recruiting Partners
+                </span>
+
+                <h2>
+                    {{ total_recruiting_partners }}
+                </h2>
+                <small class="company-stat-caption">Companies with active or upcoming drives</small>
+            </div>
+
+        </div>
+
+    </div>
+
+    <section class="company-partners-panel" aria-labelledby="company-partners-title">
+        <div class="company-partners-heading">
+            <div>
+                <h2 id="company-partners-title">Current recruiting partners</h2>
+                <p>Companies with at least one active or upcoming job drive.</p>
+            </div>
+            <span class="company-partners-count">{{ total_recruiting_partners }} partners</span>
+        </div>
+        {% if recruiting_partners %}
+        <div class="company-partner-list">
+            {% for partner in recruiting_partners %}
+            <a href="{{ url_for('view_company', company_id=partner['id']) }}" class="company-partner-chip">
+                <i class="fa-solid fa-building"></i>
+                <span>{{ partner['name'] }}</span>
+                <small>{{ partner['recruiting_drive_count'] }} drive{% if partner['recruiting_drive_count'] != 1 %}s{% endif %}</small>
+            </a>
+            {% endfor %}
+        </div>
+        {% else %}
+        <p class="company-partners-empty">No companies have an active or upcoming drive yet. Add a job drive to identify its company as a recruiting partner.</p>
+        {% endif %}
+    </section>
+
+
+    
+
+    <div
+        style="
+            background:#ffffff;
+            padding:18px;
+            border:1px solid #e5e7eb;
+            border-radius:12px;
+            margin-bottom:20px;
+        "
+    >
+
+        <div
+            style="
+                display:flex;
+                align-items:center;
+                gap:12px;
+                width:100%;
+            "
+        >
+
+            
+
+            <input
+                type="text"
+                id="companySearch"
+                placeholder="Search company name or location..."
+                oninput="filterCompanies()"
+                style="
+                    flex:1;
+                    min-width:300px;
+                    height:44px;
+                    padding:0 14px;
+                    border:1px solid #d1d5db;
+                    border-radius:8px;
+                    outline:none;
+                "
+            >
+
+
+            
+
+            <select
+                id="industryFilter"
+                onchange="filterCompanies()"
+                style="
+                    width:220px;
+                    height:44px;
+                    padding:0 12px;
+                    border:1px solid #d1d5db;
+                    border-radius:8px;
+                    background:#fff;
+                "
+            >
+
+                <option value="">
+                    All Industries
+                </option>
+
+                <option value="IT">
+                    IT
+                </option>
+
+                <option value="software">
+                    Software
+                </option>
+
+                <option value="finance">
+                    Finance
+                </option>
+
+                <option value="consulting">
+                    Consulting
+                </option>
+
+                <option value="manufacturing">
+                    Manufacturing
+                </option>
+
+                <option value="healthcare">
+                    Healthcare
+                </option>
+
+                <option value="other">
+                    Other
+                </option>
+
+            </select>
+
+        </div>
+
+    </div>
+
+
+    
+
+    <div class="content-card">
+
+        <div class="section-header">
+
+            <div>
+
+                <h2>
+                    Company Directory
+                </h2>
+
+                <p>
+                    Companies registered in CAMPUSLINK.
+                </p>
+
+            </div>
+
+        </div>
+
+
+        {% if companies %}
+
+        <div
+            style="
+                width:100%;
+                overflow-x:auto;
+            "
+        >
+
+            <table
+                class="data-table"
+                id="companiesTable"
+                style="
+                    width:100%;
+                    min-width:1000px;
+                    border-collapse:collapse;
+                "
+            >
+
+                <thead>
+
+                    <tr>
+
+                        <th>#</th>
+
+                        <th>Company</th>
+
+                        <th>Industry</th>
+
+                        <th>Location</th>
+
+                        <th>Recruiting status</th>
+
+                        <th>Website</th>
+
+                        <th>Actions</th>
+
+                    </tr>
+
+                </thead>
+
+
+                <tbody>
+
+                    {% for company in companies %}
+
+                    <tr
+                        class="company-row"
+                        data-name="{{ company['name']|lower }}"
+                        data-industry="{{ company['industry']|default('', true)|lower }}"
+                        data-location="{{ company['location']|default('', true)|lower }}"
+                        data-recruiting="{{ 'yes' if company['recruiting_drive_count'] else 'no' }}"
+                    >
+
+                        
+
+                        <td>
+                            {{ loop.index }}
+                        </td>
+
+
+                        
+
+                        <td>
+
+                            <strong>
+                                {{ company['name'] }}
+                            </strong>
+                            {% if company['location'] %}
+                            <small class="company-location-summary"><i class="fa-solid fa-location-dot"></i> {{ company['location'] }}</small>
+                            {% endif %}
+
+                        </td>
+
+
+                        
+
+                        <td>
+
+                            {% if company['industry'] %}
+
+                                {{ company['industry'] }}
+
+                            {% else %}
+
+                                <span class="text-muted">
+                                    Not provided
+                                </span>
+
+                            {% endif %}
+
+                        </td>
+
+
+                        
+
+                        <td>
+
+                            {% if company['location'] %}
+
+                                {{ company['location'] }}
+
+                            {% else %}
+
+                                <span class="text-muted">
+                                    Not provided
+                                </span>
+
+                            {% endif %}
+
+                        </td>
+
+                        <td>
+                            {% if company['recruiting_drive_count'] %}
+                            <span class="company-recruiting-badge is-recruiting">
+                                <i class="fa-solid fa-circle-check"></i>
+                                Recruiting
+                                <small>{{ company['recruiting_drive_count'] }} drive{% if company['recruiting_drive_count'] != 1 %}s{% endif %}</small>
+                            </span>
+                            {% else %}
+                            <span class="company-recruiting-badge">
+                                <i class="fa-regular fa-circle"></i>
+                                No current drive
+                            </span>
+                            {% endif %}
+                        </td>
+
+
+                        
+
+                        <td>
+
+                            {% if company['website'] %}
+
+                            <a
+                                href="{{ company['website'] }}"
+                                target="_blank"
+                                rel="noopener noreferrer"
+                            >
+                                Visit Website
+                            </a>
+
+                            {% else %}
+
+                            <span class="text-muted">
+                                Not provided
+                            </span>
+
+                            {% endif %}
+
+                        </td>
+
+
+                        
+
+                        <td>
+
+                            <div
+                                style="
+                                    display:flex;
+                                    gap:6px;
+                                    align-items:center;
+                                    white-space:nowrap;
+                                "
+                            >
+
+                                
+
+                                <a
+                                    href="{{ url_for('view_company', company_id=company['id']) }}"
+                                    class="action-btn"
+                                    title="View Company"
+                                >
+                                    👁
+                                </a>
+
+
+                                
+
+                                <a
+                                    href="{{ url_for('edit_company', company_id=company['id']) }}"
+                                    class="action-btn"
+                                    title="Edit Company"
+                                >
+                                    ✏
+                                </a>
+
+
+                                
+
+                                <form
+                                    method="POST"
+                                    action="{{ url_for('delete_company', company_id=company['id']) }}"
+                                    ,onsubmit="return confirmCompanyDelete('{{ company['name']|e }}');"
+                                    style="display:inline;"
+                                >
+
+                                    <button
+                                        type="submit"
+                                        class="action-btn delete-btn"
+                                        title="Delete Company"
+                                    >
+                                        🗑
+                                    </button>
+
+                                </form>
+
+                            </div>
+
+                        </td>
+
+                    </tr>
+
+                    {% endfor %}
+
+                </tbody>
+
+            </table>
+
+        </div>
+
+
+        
+
+        <div
+            id="noCompanyResults"
+            style="
+                display:none;
+                text-align:center;
+                padding:30px;
+                color:#6b7280;
+            "
+        >
+            No companies found.
+        </div>
+
+
+        {% else %}
+
+
+        
+
+        <div class="empty-state">
+
+            <div class="empty-state-icon">
+                🏢
+            </div>
+
+            <h3>
+                No Companies Yet
+            </h3>
+
+            <p>
+                Add your first recruiting company to start
+                managing placement drives.
+            </p>
+
+            <a
+                href="{{ url_for('add_company') }}"
+                class="btn btn-primary"
+            >
+                + Add Company
+            </a>
+
+        </div>
+
+        {% endif %}
+
+    </div>
+
+</div>
+
+
+
+
+<script>
+
+function filterCompanies() {
+
+    const searchInput =
+        document.getElementById("companySearch");
+
+    const industryInput =
+        document.getElementById("industryFilter");
+
+    const rows =
+        document.querySelectorAll(
+            "#companiesTable tbody .company-row"
+        );
+
+
+    if (!searchInput || !industryInput) {
+        return;
+    }
+
+
+    const search =
+        searchInput.value
+        .trim()
+        .toLowerCase();
+
+
+    const industry =
+        industryInput.value
+        .trim()
+        .toLowerCase();
+
+
+    let visibleCount = 0;
+
+
+    rows.forEach(function(row) {
+
+        const name =
+            row.dataset.name || "";
+
+        const location =
+            row.dataset.location || "";
+
+        const rowIndustry =
+            row.dataset.industry || "";
+
+
+        const searchMatch =
+            search === "" ||
+            name.includes(search) ||
+            location.includes(search);
+
+
+        const industryMatch =
+            industry === "" ||
+            rowIndustry.includes(industry);
+
+
+        if (
+            searchMatch &&
+            industryMatch
+        ) {
+
+            row.style.display = "table-row";
+
+            visibleCount++;
+
+        } else {
+
+            row.style.display = "none";
+
+        }
+
+    });
+
+
+    const noResults =
+        document.getElementById(
+            "noCompanyResults"
+        );
+
+
+    if (noResults) {
+
+        noResults.style.display =
+            visibleCount === 0
+            ? "block"
+            : "none";
+
+    }
+
+}
+
+
+function confirmCompanyDelete(companyName) {
+
+    return confirm(
+        "Are you sure you want to delete " +
+        companyName +
+        "?\n\n" +
+        "This action cannot be undone."
+    );
+
+}
+
+</script>
+
+{% endblock %}

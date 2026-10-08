@@ -1,0 +1,1186 @@
+{% extends "base.html" %}
+
+{% block title %}Job Drives | CAMPUSLINK{% endblock %}
+
+{% block content %}
+
+
+
+<div class="page-header job-page-header">
+
+    <div>
+        <div class="eyebrow"><i class="fa-solid fa-briefcase"></i> Recruitment management</div>
+        <h1>Job Drives</h1>
+        <p>Manage campus recruitment drives, eligibility, and hiring timelines.</p>
+    </div>
+
+    <div class="page-header-actions">
+        <a href="{{ url_for('add_job') }}" class="btn btn-primary">
+            <i class="fa-solid fa-plus"></i> Add Job Drive
+        </a>
+    </div>
+
+</div>
+
+
+
+
+<div class="stats-grid job-stats-grid">
+
+    <div class="stat-card">
+
+        <div class="stat-icon stat-icon-info">
+            <i class="fa-solid fa-briefcase"></i>
+        </div>
+
+        <div>
+            <span class="stat-label">Total Job Drives</span>
+            <h2>{{ jobs|length }}</h2>
+        </div>
+
+    </div>
+
+
+    <div class="stat-card">
+
+        <div class="stat-icon stat-icon-success">
+            <i class="fa-solid fa-circle-check"></i>
+        </div>
+
+        <div>
+            <span class="stat-label">Active Drives</span>
+            <h2 id="activeCount">{{ drive_counts['Active'] }}</h2>
+            <small class="job-stat-caption">Drive date is today or application window is open without a future drive date</small>
+        </div>
+
+    </div>
+
+
+    <div class="stat-card">
+
+        <div class="stat-icon">
+            <i class="fa-solid fa-building"></i>
+        </div>
+
+        <div>
+            <span class="stat-label">Companies Hiring</span>
+            <h2 id="companyCount">{{ hiring_company_count }}</h2>
+            <small class="job-stat-caption">Distinct companies with applications currently open</small>
+        </div>
+
+    </div>
+
+
+    <div class="stat-card">
+
+        <div class="stat-icon stat-icon-warning">
+            <i class="fa-solid fa-calendar-days"></i>
+        </div>
+
+        <div>
+            <span class="stat-label">Upcoming Drives</span>
+            <h2 id="upcomingCount">{{ drive_counts['Upcoming'] }}</h2>
+            <small class="job-stat-caption">Future drive date; deadline has not passed</small>
+        </div>
+
+    </div>
+
+    <div class="stat-card">
+
+        <div class="stat-icon stat-icon-danger">
+            <i class="fa-solid fa-circle-xmark"></i>
+        </div>
+
+        <div>
+            <span class="stat-label">Closed Drives</span>
+            <h2 id="closedCount">{{ drive_counts['Closed'] }}</h2>
+            <small class="job-stat-caption">Drive date or application deadline has passed</small>
+        </div>
+
+    </div>
+
+</div>
+
+
+
+
+<div class="content-card">
+
+    <div class="section-header">
+
+        <div>
+            <h2>Recruitment Drives</h2>
+            <p><span id="visibleJobCount">{{ jobs|length }}</span> drives matching your view</p>
+        </div>
+        <button type="button" class="btn btn-quiet job-clear-filters" id="clearJobFilters">Clear filters</button>
+
+    </div>
+
+
+    
+
+    <div class="job-filters">
+
+        <label class="search-box" for="jobSearch">
+
+            <i class="fa-solid fa-magnifying-glass"></i>
+
+            <input
+                type="text"
+                id="jobSearch"
+                placeholder="Search role or company..."
+            >
+
+        </label>
+
+
+        <select id="statusFilter" aria-label="Filter by drive status">
+
+            <option value="all">
+                All Status
+            </option>
+
+            <option value="Active">
+                Active
+            </option>
+
+            <option value="Upcoming">
+                Upcoming
+            </option>
+
+            <option value="Closed">
+                Closed
+            </option>
+            <option value="Date needs review">
+                Needs date review
+            </option>
+
+        </select>
+
+
+        <select id="branchFilter" aria-label="Filter by eligible branch">
+
+            <option value="all">
+                All Branches
+            </option>
+
+            <option value="CSE">CSE</option>
+            <option value="IT">IT</option>
+            <option value="ECE">ECE</option>
+            <option value="EEE">EEE</option>
+            <option value="ME">ME</option>
+            <option value="CE">CE</option>
+
+        </select>
+
+    </div>
+
+
+    
+
+    {% if jobs %}
+
+    <div class="table-container">
+
+        <table class="data-table job-table">
+
+            <thead>
+
+                <tr>
+
+                    <th>#</th>
+                    <th>Job / Company</th>
+                    <th>Package</th>
+                    <th>Eligibility</th>
+                    <th>Deadline</th>
+                    <th>Drive Date</th>
+                    <th>Status</th>
+                    <th>Action</th>
+
+                </tr>
+
+            </thead>
+
+
+            <tbody id="jobTableBody">
+
+                {% for job in jobs %}
+
+                <tr
+                    class="job-row"
+                    data-role="{{ job['role']|lower }}"
+                    data-company="{{ job['company_name']|lower }}"
+                    data-status="{{ job['status'] }}"
+                    data-branches="{{ job['eligible_branches'] or '' }}"
+                    data-date="{{ job['drive_date'] or '' }}"
+                >
+
+                    <td>
+                        <strong>{{ loop.index }}</strong>
+                    </td>
+
+
+                    
+
+                    <td>
+
+                        <div class="job-info">
+
+                            <div class="job-icon">
+                                <i class="fa-solid fa-briefcase"></i>
+                            </div>
+
+                            <div>
+
+                                <strong>
+                                    {{ job['role'] }}
+                                </strong>
+
+                                <span>
+                                    {{ job['company_name'] }}
+                                </span>
+
+                            </div>
+
+                        </div>
+
+                    </td>
+
+
+                    
+
+                    <td>
+
+                        {% if job['package'] %}
+
+                            <strong class="package-value">
+                                ₹{{ "%.2f"|format(job['package']) }} LPA
+                            </strong>
+
+                        {% else %}
+
+                            <span class="text-muted">
+                                Not specified
+                            </span>
+
+                        {% endif %}
+
+                    </td>
+
+
+                    
+
+                    <td>
+
+                        <div class="eligibility-info">
+
+                            <span>
+                                CGPA ≥ {{ job['min_cgpa'] }}
+                            </span>
+
+                            <span>
+                                Backlogs ≤ {{ job['max_backlogs'] }}
+                            </span>
+
+                        </div>
+
+                    </td>
+
+
+                    
+
+                    <td>
+
+                        {% if job['application_deadline'] %}
+
+                            {{ job['application_deadline']|job_date }}
+
+                        {% else %}
+
+                            <span class="text-muted">
+                                —
+                            </span>
+
+                        {% endif %}
+
+                    </td>
+
+
+                    
+
+                    <td>
+
+                        {% if job['drive_date'] %}
+
+                            {{ job['drive_date']|job_date }}
+
+                        {% else %}
+
+                            <span class="text-muted">
+                                —
+                            </span>
+
+                        {% endif %}
+
+                    </td>
+
+
+                    
+
+                    <td>
+
+                        {% if job['status'] == 'Active' %}
+
+                            <span class="badge badge-success">
+                                <i class="fa-solid fa-circle"></i>
+                                Active
+                            </span>
+
+                        {% elif job['status'] == 'Upcoming' %}
+
+                            <span class="badge badge-info">
+                                <i class="fa-solid fa-circle"></i>
+                                Upcoming
+                            </span>
+
+                        {% else %}
+
+                            <span class="badge badge-warning">
+                                <i class="fa-solid fa-circle"></i>
+                                {{ job['status'] }}
+                            </span>
+
+                        {% endif %}
+
+                    </td>
+
+
+                    
+
+                    <td>
+
+                        <button
+                            type="button"
+                            class="action-btn view-job-btn"
+                            data-id="{{ job['id'] }}"
+                            data-role="{{ job['role'] }}"
+                            data-company="{{ job['company_name'] }}"
+                            data-package="{{ job['package'] or 'Not specified' }}"
+                            data-cgpa="{{ job['min_cgpa'] }}"
+                            data-backlogs="{{ job['max_backlogs'] }}"
+                            data-attendance="{{ job['min_attendance'] }}"
+                            data-branches="{{ job['eligible_branches'] or 'All branches' }}"
+                            data-skills="{{ job['required_skills'] or 'Not specified' }}"
+                            data-deadline="{{ job['application_deadline']|job_date if job['application_deadline'] else 'Not specified' }}"
+                            data-date="{{ job['drive_date']|job_date if job['drive_date'] else 'Not specified' }}"
+                            data-status="{{ job['status'] }}"
+                        >
+
+                            <i class="fa-solid fa-eye"></i>
+                            View
+
+                        </button>
+
+                    </td>
+
+                </tr>
+
+                {% endfor %}
+
+            </tbody>
+
+        </table>
+
+    </div>
+
+
+    
+
+    <div
+        id="noResults"
+        class="empty-state"
+        style="display:none;"
+    >
+
+        <div class="empty-state-icon">
+            <i class="fa-solid fa-magnifying-glass"></i>
+        </div>
+
+        <h3>No Job Drives Found</h3>
+
+        <p>
+            Try changing your search or filter.
+        </p>
+
+    </div>
+
+
+    {% else %}
+
+    
+
+    <div class="empty-state">
+
+        <div class="empty-state-icon">
+            <i class="fa-solid fa-briefcase"></i>
+        </div>
+
+        <h3>No Job Drives Yet</h3>
+
+        <p>
+            Add a recruitment drive to start managing campus opportunities.
+        </p>
+
+    </div>
+
+    {% endif %}
+
+</div>
+
+
+
+
+<div
+    class="job-modal"
+    id="jobModal"
+    role="dialog"
+    aria-modal="true"
+    aria-labelledby="modalRole"
+    aria-hidden="true"
+>
+
+    <div class="job-modal-overlay"></div>
+
+    <div class="job-modal-content">
+
+        <div class="job-modal-header">
+
+            <div>
+
+                <span class="modal-label">
+                    JOB DRIVE
+                </span>
+
+                <h2 id="modalRole">
+                    Job Role
+                </h2>
+
+                <p id="modalCompany">
+                    Company
+                </p>
+
+            </div>
+
+            <button
+                type="button"
+                class="modal-close"
+                id="closeModal"
+                aria-label="Close job drive details"
+            >
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+
+        </div>
+
+
+        <div class="modal-status">
+
+            <span id="modalStatus">
+                Active
+            </span>
+
+        </div>
+
+
+        <div class="job-detail-grid">
+
+            <div class="job-detail-item">
+
+                <span>Package</span>
+                <strong id="modalPackage">—</strong>
+
+            </div>
+
+
+            <div class="job-detail-item">
+
+                <span>Minimum CGPA</span>
+                <strong id="modalCgpa">—</strong>
+
+            </div>
+
+
+            <div class="job-detail-item">
+
+                <span>Maximum Backlogs</span>
+                <strong id="modalBacklogs">—</strong>
+
+            </div>
+
+
+            <div class="job-detail-item">
+
+                <span>Minimum Attendance</span>
+                <strong id="modalAttendance">—</strong>
+
+            </div>
+
+
+            <div class="job-detail-item">
+
+                <span>Eligible Branches</span>
+                <strong id="modalBranches">—</strong>
+
+            </div>
+
+
+            <div class="job-detail-item">
+
+                <span>Required Skills</span>
+                <strong id="modalSkills">—</strong>
+
+            </div>
+
+
+            <div class="job-detail-item">
+
+                <span>Application Deadline</span>
+                <strong id="modalDeadline">—</strong>
+
+            </div>
+
+
+            <div class="job-detail-item">
+
+                <span>Drive Date</span>
+                <strong id="modalDate">—</strong>
+
+            </div>
+
+        </div>
+
+
+        <div class="modal-footer">
+
+            <button
+                type="button"
+                class="btn btn-secondary"
+                id="modalCloseBtn"
+            >
+                Close
+            </button>
+
+        </div>
+
+    </div>
+
+</div>
+
+
+
+
+<style>
+
+.job-stats-grid {
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+}
+
+.job-page-header .eyebrow {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+}
+
+.job-stats-grid .stat-card {
+    display: flex;
+    align-items: flex-start;
+    gap: 13px;
+    min-width: 0;
+    transition: transform .18s ease, box-shadow .18s ease;
+}
+
+.job-stats-grid .stat-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 26px rgba(15, 23, 42, .09);
+}
+
+.job-stats-grid .stat-card h2 {
+    margin-top: 3px;
+    font-size: 24px;
+}
+
+.job-stat-caption {
+    display: block;
+    margin-top: 5px;
+    color: var(--text-secondary);
+    font-size: 10px;
+    line-height: 1.45;
+}
+if (visibleJobCount) visibleJobCount.textContent = visible;
+
+@media (max-width: 1150px) {
+    .job-stats-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+}
+
+@media (max-width: 650px) {
+    .job-stats-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
+@media (max-width: 420px) {
+    .job-stats-grid { grid-template-columns: 1fr; }
+}
+
+.job-filters {
+    display: flex;
+    gap: 14px;
+    margin-bottom: 22px;
+    flex-wrap: wrap;
+    align-items: center;
+    padding: 12px;
+    border: 1px solid #edf0f7;
+    border-radius: 12px;
+    background: #fafbff;
+}
+
+.search-box {
+    flex: 1;
+    min-width: 260px;
+    position: relative;
+}
+
+.search-box i {
+    position: absolute;
+    left: 15px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--text-secondary);
+}
+
+.search-box input {
+    width: 100%;
+    padding: 12px 15px 12px 42px;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    background: var(--surface);
+    color: var(--text);
+    outline: none;
+}
+
+.search-box input:focus {
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px var(--primary-light);
+}
+
+.job-filters select {
+    min-width: 160px;
+    padding: 12px 14px;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    background: var(--surface);
+    color: var(--text);
+    cursor: pointer;
+    outline: none;
+}
+
+.job-filters select:focus {
+    border-color: var(--primary);
+}
+
+.job-info {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    min-width: 220px;
+}
+
+.job-icon {
+    width: 42px;
+    height: 42px;
+    border-radius: 10px;
+    background: var(--primary-light);
+    color: var(--primary);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.job-info strong {
+    display: block;
+    margin-bottom: 3px;
+}
+
+.job-info span {
+    display: block;
+    color: var(--text-secondary);
+    font-size: 13px;
+}
+
+.package-value {
+    white-space: nowrap;
+}
+
+.eligibility-info {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    font-size: 13px;
+}
+
+.badge i {
+    font-size: 6px;
+    margin-right: 4px;
+}
+
+.action-btn {
+    border: 1px solid var(--border);
+    background: var(--surface);
+    color: var(--text);
+    padding: 8px 12px;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: 0.2s ease;
+}
+
+.action-btn:hover {
+    background: var(--primary-light);
+    color: var(--primary);
+    border-color: var(--primary);
+}
+
+.job-row {
+    transition: background 0.2s ease;
+}
+
+.job-row:hover {
+    background: var(--background);
+}
+
+.job-table {
+    min-width: 900px;
+}
+
+.job-clear-filters {
+    white-space: nowrap;
+}
+
+.job-modal[aria-hidden="true"] {
+    visibility: hidden;
+}
+
+.job-modal[aria-hidden="false"] {
+    visibility: visible;
+}
+
+
+
+
+.job-modal {
+    display: none;
+    position: fixed;
+    inset: 0;
+    z-index: 1000;
+}
+
+.job-modal.active {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.job-modal-overlay {
+    position: absolute;
+    inset: 0;
+    background: rgba(15, 23, 42, 0.55);
+    backdrop-filter: blur(4px);
+}
+
+.job-modal-content {
+    position: relative;
+    width: min(760px, calc(100% - 30px));
+    max-height: 90vh;
+    overflow-y: auto;
+    background: var(--surface);
+    border-radius: 18px;
+    box-shadow: 0 25px 70px rgba(0, 0, 0, 0.18);
+    animation: jobModalIn 0.2s ease;
+}
+
+@keyframes jobModalIn {
+
+    from {
+        opacity: 0;
+        transform: translateY(15px) scale(0.98);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+
+}
+
+.job-modal-header {
+    padding: 24px;
+    display: flex;
+    justify-content: space-between;
+    border-bottom: 1px solid var(--border);
+}
+
+.modal-label {
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 1px;
+    color: var(--primary);
+}
+
+.job-modal-header h2 {
+    margin: 5px 0;
+}
+
+.job-modal-header p {
+    color: var(--text-secondary);
+}
+
+.modal-close {
+    width: 38px;
+    height: 38px;
+    border: 0;
+    border-radius: 9px;
+    background: var(--background);
+    cursor: pointer;
+    font-size: 17px;
+}
+
+.modal-close:hover {
+    background: var(--danger-light);
+    color: var(--danger);
+}
+
+.modal-status {
+    padding: 16px 24px 0;
+}
+
+.modal-status span {
+    display: inline-block;
+    padding: 6px 12px;
+    border-radius: 20px;
+    background: var(--success-light);
+    color: var(--success);
+    font-size: 13px;
+    font-weight: 600;
+}
+
+.modal-status .status-active { background: var(--success-light); color: var(--success); }
+.modal-status .status-upcoming { background: var(--info-light); color: var(--info); }
+.modal-status .status-closed,
+.modal-status .status-date-needs-review { background: var(--warning-light); color: var(--warning); }
+
+.job-detail-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 14px;
+    padding: 24px;
+}
+
+.job-detail-item {
+    padding: 16px;
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    background: var(--background);
+}
+
+.job-detail-item span {
+    display: block;
+    color: var(--text-secondary);
+    font-size: 12px;
+    margin-bottom: 5px;
+}
+
+.job-detail-item strong {
+    display: block;
+    line-height: 1.4;
+}
+
+.modal-footer {
+    padding: 18px 24px;
+    border-top: 1px solid var(--border);
+    display: flex;
+    justify-content: flex-end;
+}
+
+
+
+
+@media (max-width: 768px) {
+
+    .job-detail-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .job-filters {
+        flex-direction: column;
+    }
+
+    .search-box {
+        min-width: 100%;
+    }
+
+}
+
+</style>
+
+
+
+
+<script>
+
+document.addEventListener("DOMContentLoaded", function () {
+
+    const rows = document.querySelectorAll(".job-row");
+
+    const searchInput = document.getElementById("jobSearch");
+
+    const statusFilter = document.getElementById("statusFilter");
+
+    const branchFilter = document.getElementById("branchFilter");
+
+    const noResults = document.getElementById("noResults");
+    const visibleJobCount = document.getElementById("visibleJobCount");
+
+
+    
+
+    
+
+    function filterJobs() {
+
+        const search =
+            searchInput.value.toLowerCase().trim();
+
+        const status =
+            statusFilter.value;
+
+        const branch =
+            branchFilter.value.toLowerCase();
+
+        let visible = 0;
+
+
+        rows.forEach(row => {
+
+            const role =
+                row.dataset.role;
+
+            const company =
+                row.dataset.company;
+
+            const rowStatus =
+                row.dataset.status;
+
+            const branches = row.dataset.branches
+                .split(/[,;\n]+/)
+                .map(value => value.trim().toLowerCase())
+                .filter(Boolean);
+
+
+            const matchesSearch =
+                role.includes(search) ||
+                company.includes(search);
+
+            const matchesStatus =
+                status === "all" ||
+                rowStatus === status;
+
+            const matchesBranch =
+                branch === "all" ||
+                branches.length === 0 ||
+                branches.some(value =>
+                    ["all", "all branches", "any", "*"].includes(value) ||
+                    value === branch
+                );
+
+
+            if (
+                matchesSearch &&
+                matchesStatus &&
+                matchesBranch
+            ) {
+
+                row.style.display = "";
+
+                visible++;
+
+            } else {
+
+                row.style.display = "none";
+
+            }
+
+        });
+
+
+        if (noResults) {
+
+            noResults.style.display =
+                visible === 0 && rows.length > 0 ? "block" : "none";
+
+        }
+
+    }
+
+
+    searchInput.addEventListener(
+        "input",
+        filterJobs
+    );
+
+    statusFilter.addEventListener(
+        "change",
+        filterJobs
+    );
+
+    branchFilter.addEventListener(
+        "change",
+        filterJobs
+    );
+
+    document.getElementById("clearJobFilters").addEventListener("click", () => {
+        searchInput.value = "";
+        statusFilter.value = "all";
+        branchFilter.value = "all";
+        filterJobs();
+    });
+
+    const modal =
+        document.getElementById("jobModal");
+
+    const closeModal =
+        document.getElementById("closeModal");
+
+    const modalCloseBtn =
+        document.getElementById("modalCloseBtn");
+
+    let lastFocusedElement = null;
+
+    document.querySelectorAll(".view-job-btn")
+        .forEach(button => {
+
+            button.addEventListener(
+                "click",
+                function () {
+                    lastFocusedElement = this;
+
+                    document.getElementById("modalRole")
+                        .textContent =
+                        this.dataset.role;
+
+                    document.getElementById("modalCompany")
+                        .textContent =
+                        this.dataset.company;
+
+                    document.getElementById("modalPackage")
+                        .textContent =
+                        this.dataset.package === "Not specified"
+                        ? "Not specified"
+                        : "₹" + this.dataset.package + " LPA";
+
+                    document.getElementById("modalCgpa")
+                        .textContent =
+                        this.dataset.cgpa;
+
+                    document.getElementById("modalBacklogs")
+                        .textContent =
+                        this.dataset.backlogs;
+
+                    document.getElementById("modalAttendance")
+                        .textContent =
+                        this.dataset.attendance + "%";
+
+                    document.getElementById("modalBranches")
+                        .textContent =
+                        this.dataset.branches;
+
+                    document.getElementById("modalSkills")
+                        .textContent =
+                        this.dataset.skills;
+
+                    document.getElementById("modalDeadline")
+                        .textContent =
+                        this.dataset.deadline;
+
+                    document.getElementById("modalDate")
+                        .textContent =
+                        this.dataset.date;
+
+                    const modalStatus = document.getElementById("modalStatus");
+                    modalStatus.textContent = this.dataset.status;
+                    modalStatus.className = "status-" +
+                        this.dataset.status.toLowerCase().replace(/\s+/g, "-");
+
+
+                    modal.classList.add("active");
+                    modal.setAttribute("aria-hidden", "false");
+
+                    document.body.style.overflow =
+                        "hidden";
+                    closeModal.focus();
+
+                }
+            );
+
+        });
+
+
+    function hideModal() {
+
+        modal.classList.remove("active");
+        modal.setAttribute("aria-hidden", "true");
+
+        document.body.style.overflow =
+            "";
+        if (lastFocusedElement) lastFocusedElement.focus();
+
+    }
+
+
+    closeModal.addEventListener(
+        "click",
+        hideModal
+    );
+
+    modalCloseBtn.addEventListener(
+        "click",
+        hideModal
+    );
+
+
+    document.querySelector(".job-modal-overlay")
+        .addEventListener(
+            "click",
+            hideModal
+        );
+
+
+    document.addEventListener(
+        "keydown",
+        function (event) {
+
+            if (
+                event.key === "Escape" &&
+                modal.classList.contains("active")
+            ) {
+
+                hideModal();
+
+            }
+
+        }
+    );
+
+
+});
+
+</script>
+
+{% endblock %}

@@ -1,0 +1,192 @@
+{% extends "base.html" %}
+
+{% block title %}{{ student['name'] }} | CAMPUSLINK{% endblock %}
+
+{% block content %}
+<div class="page-header student-profile-header">
+    <div>
+        <div class="eyebrow"><i class="fa-solid fa-user-graduate"></i> Student profile</div>
+        <h1>{{ student['name'] }}</h1>
+        <p>Complete academic, placement, interview, and offer overview.</p>
+    </div>
+    <div class="page-header-actions">
+        <a href="{{ url_for('students') }}" class="btn btn-secondary"><i class="fa-solid fa-arrow-left"></i> Students</a>
+        <a href="{{ url_for('edit_student', student_id=student['id'], return_to_profile=1) }}" class="btn btn-secondary"><i class="fa-solid fa-pen"></i> Attendance &amp; backlogs</a>
+        <a href="{{ url_for('applications', student_id=student['id']) }}" class="btn btn-primary"><i class="fa-solid fa-plus"></i> Add application</a>
+    </div>
+</div>
+
+{% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+    <div class="certificate-alert-list" aria-live="polite">
+        {% for category, message in messages %}
+        <div class="certificate-alert certificate-alert-{{ category }}">
+            <i class="fa-solid {{ 'fa-circle-check' if category == 'success' else 'fa-circle-exclamation' }}"></i>
+            <span>{{ message }}</span>
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+{% endwith %}
+
+<div class="student-hero-card">
+    <div class="student-profile-avatar">{{ student['name'][:2]|upper }}</div>
+    <div class="student-hero-copy">
+        <div class="student-name-row"><h2>{{ student['name'] }}</h2><span class="profile-status profile-status-{{ student['placement_status']|lower|replace(' ', '-') }}">{{ student['placement_status'] }}</span></div>
+        <p><i class="fa-solid fa-id-card"></i> {{ student['registration_no'] }} <span class="profile-divider">•</span> <i class="fa-solid fa-code-branch"></i> {{ student['branch'] }}</p>
+        <div class="student-contact-row"><span><i class="fa-regular fa-envelope"></i> {{ student['email'] or "Email not provided" }}</span><span><i class="fa-solid fa-phone"></i> {{ student['phone'] or "Phone not provided" }}</span></div>
+    </div>
+    <div class="student-hero-id"><span>Student ID</span><strong>#{{ student['id'] }}</strong></div>
+</div>
+
+<div class="student-summary-grid">
+    <div class="student-summary-item"><span><i class="fa-solid fa-graduation-cap"></i> CGPA</span><strong>{{ "%.2f"|format(student['cgpa']) }}</strong></div>
+    <div class="student-summary-item"><span><i class="fa-solid fa-chart-line"></i> Attendance</span><strong>{{ "%.1f"|format(student['attendance']) }}%</strong></div>
+    <div class="student-summary-item"><span><i class="fa-solid fa-triangle-exclamation"></i> Backlogs</span><strong>{{ student['backlogs'] }}</strong></div>
+    <div class="student-summary-item"><span><i class="fa-solid fa-briefcase"></i> Applications</span><strong>{{ applications|length }}</strong></div>
+    <div class="student-summary-item"><span><i class="fa-solid fa-calendar-check"></i> Interviews</span><strong>{{ interviews|length }}</strong></div>
+    <div class="student-summary-item"><span><i class="fa-solid fa-award"></i> Offers</span><strong>{{ offers|length }}</strong></div>
+</div>
+
+<div class="student-activity-actions">
+    <a href="{{ url_for('edit_student', student_id=student['id'], return_to_profile=1) }}"><i class="fa-solid fa-chart-line"></i><span><strong>Update attendance &amp; backlogs</strong><small>Edit this student's academic record</small></span><i class="fa-solid fa-arrow-right"></i></a>
+    <a href="{{ url_for('edit_resume', student_id=student['id']) }}"><i class="fa-solid fa-file-user"></i><span><strong>{{ 'Manage resume' if resume_status in ['Ready', 'Uploaded'] else 'Create resume' }}</strong><small>Resume status: {{ resume_status }}</small></span><i class="fa-solid fa-arrow-right"></i></a>
+    {% if has_uploaded_resume %}<a href="{{ url_for('download_original_resume', student_id=student['id']) }}"><i class="fa-solid fa-file-arrow-down"></i><span><strong>Download original resume</strong><small>Open the student's uploaded resume file</small></span><i class="fa-solid fa-arrow-right"></i></a>{% endif %}
+    <a href="{{ url_for('applications', student_id=student['id']) }}"><i class="fa-solid fa-file-circle-plus"></i><span><strong>Add application</strong><small>Choose a job drive for this student</small></span><i class="fa-solid fa-arrow-right"></i></a>
+    <a href="{{ url_for('communication_inbox', student_id=student['id']) }}"><i class="fa-solid fa-inbox"></i><span><strong>Student inbox</strong><small>{{ unread_communications }} unread notification{% if unread_communications != 1 %}s{% endif %}</small></span><i class="fa-solid fa-arrow-right"></i></a>
+    {% if applications %}
+    <a href="{{ url_for('interviews', student_id=student['id']) }}"><i class="fa-solid fa-calendar-plus"></i><span><strong>Schedule interview</strong><small>Choose one of this student's applications</small></span><i class="fa-solid fa-arrow-right"></i></a>
+    {% else %}
+    <div class="student-activity-action-disabled" title="Add an application before scheduling an interview"><i class="fa-solid fa-calendar-plus"></i><span><strong>Schedule interview</strong><small>Add an application first</small></span><i class="fa-solid fa-lock"></i></div>
+    {% endif %}
+    {% if selected_offer_applications %}
+    <a href="{{ url_for('offers', student_id=student['id']) }}"><i class="fa-solid fa-award"></i><span><strong>Create offer</strong><small>For a selected application</small></span><i class="fa-solid fa-arrow-right"></i></a>
+    {% else %}
+    <div class="student-activity-action-disabled" title="Mark an application as Selected before creating an offer"><i class="fa-solid fa-award"></i><span><strong>Create offer</strong><small>Requires a selected application</small></span><i class="fa-solid fa-lock"></i></div>
+    {% endif %}
+</div>
+
+<div class="student-detail-layout">
+    <div class="student-detail-main">
+        <div class="content-card student-section-card">
+            <div class="card-header"><div><h2>Skills and academic profile</h2><p>Core information used for eligibility and matching.</p></div></div>
+            <div class="student-detail-grid">
+                <div><span>Branch</span><strong>{{ student['branch'] }}</strong></div>
+                <div><span>CGPA</span><strong>{{ "%.2f"|format(student['cgpa']) }} / 10</strong></div>
+                <div><span>Attendance</span><strong>{{ "%.1f"|format(student['attendance']) }}%</strong></div>
+                <div><span>Backlogs</span><strong>{{ "No active backlogs" if student['backlogs'] == 0 else student['backlogs'] }}</strong></div>
+            </div>
+            <div class="student-skills">
+                <span>Skills <small class="student-skill-count">{{ student_skills|length }}</small></span>
+                <div>
+                    {% for skill in student_skills %}
+                    <span class="skill-tag">{{ skill }}</span>
+                    {% else %}
+                    <small>No skills added yet. Add skills from Edit student.</small>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+
+        <div class="content-card student-section-card certificate-section">
+            <div class="card-header">
+                <div>
+                    <h2>Certificates</h2>
+                    <p>Upload and open the student's original certificate files.</p>
+                </div>
+                <span class="certificate-count">{{ certificates|length }} files</span>
+            </div>
+
+            <form class="certificate-upload-form"
+                  method="POST"
+                  action="{{ url_for('upload_student_certificate', student_id=student['id']) }}"
+                  enctype="multipart/form-data">
+                <div class="certificate-upload-fields">
+                    <label class="certificate-field">
+                        <span>Certificate name</span>
+                        <input type="text" name="certificate_name" maxlength="120"
+                               placeholder="e.g. AWS Cloud Practitioner" required>
+                    </label>
+                    <label class="certificate-field">
+                        <span>Original file</span>
+                        <input type="file" name="certificate_file"
+                               accept=".pdf,.png,.jpg,.jpeg,application/pdf,image/png,image/jpeg"
+                               required>
+                    </label>
+                    <button class="btn btn-primary certificate-upload-button" type="submit">
+                        <i class="fa-solid fa-arrow-up-from-bracket"></i> Upload certificate
+                    </button>
+                </div>
+                <p class="certificate-upload-note">
+                    PDF, PNG, or JPEG · Maximum {{ (max_certificate_size / 1024 / 1024)|int }} MB.
+                    Uploaded files are stored as provided, not generated demo documents.
+                </p>
+            </form>
+
+            <div class="certificate-list">
+                {% for certificate in certificates %}
+                <div class="certificate-item">
+                    <span class="certificate-file-icon certificate-file-{{ 'pdf' if certificate['mime_type'] == 'application/pdf' else 'image' }}">
+                        <i class="fa-solid {{ 'fa-file-pdf' if certificate['mime_type'] == 'application/pdf' else 'fa-file-image' }}"></i>
+                    </span>
+                    <span class="certificate-copy">
+                        <strong>{{ certificate['certificate_name'] }}</strong>
+                        <small>{{ certificate['original_filename'] }} · {{ (certificate['file_size'] / 1024)|round(0)|int }} KB</small>
+                    </span>
+                    <a class="certificate-open-link"
+                       href="{{ url_for('open_student_certificate', student_id=student['id'], certificate_id=certificate['id']) }}"
+                       target="_blank" rel="noopener">
+                        <i class="fa-solid fa-arrow-up-right-from-square"></i> Open original
+                    </a>
+                    <a class="certificate-download-link"
+                       href="{{ url_for('open_student_certificate', student_id=student['id'], certificate_id=certificate['id'], download=1) }}"
+                       aria-label="Download {{ certificate['original_filename'] }}"
+                       title="Download original">
+                        <i class="fa-solid fa-download"></i>
+                    </a>
+                </div>
+                {% else %}
+                <div class="certificate-empty">
+                    <span class="certificate-empty-icon"><i class="fa-solid fa-file-circle-plus"></i></span>
+                    <strong>No certificates uploaded</strong>
+                    <span>Upload an original PDF or image to add a clickable certificate to this profile.</span>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <div class="content-card student-section-card">
+            <div class="card-header"><div><h2>Application history</h2><p>Placement opportunities associated with this student.</p></div><a class="btn btn-quiet" href="{{ url_for('applications') }}">View all</a></div>
+            <div class="student-record-list">
+                {% for application in applications %}
+                <div class="student-record"><span class="record-icon"><i class="fa-solid fa-file-lines"></i></span><div class="record-copy"><strong>{{ application['role'] }}</strong><small>{{ application['company_name'] }} · Match score {{ application['match_score']|round|int }}%</small></div><span class="record-status record-status-{{ application['status']|lower|replace(' ', '-') }}">{{ application['status'] }}</span></div>
+                {% else %}<div class="empty-state"><i class="fa-solid fa-inbox"></i><strong>No applications yet</strong><span>Applications will appear here when added.</span></div>{% endfor %}
+            </div>
+        </div>
+    </div>
+
+    <div class="student-detail-side">
+        <div class="content-card student-section-card">
+            <div class="card-header"><div><h2>Placement outcome</h2><p>Offer records for this student.</p></div></div>
+            {% for offer in offers %}
+            <div class="student-offer-card"><div><strong>{{ offer['role'] }}</strong><span>{{ offer['company_name'] }}</span></div><strong class="student-package">{{ offer['package']|round(1) }} LPA</strong><small>{{ offer['offer_date'] or "Date not provided" }} · {{ offer['status'] }}</small></div>
+            {% else %}<div class="empty-state"><i class="fa-solid fa-award"></i><strong>No offers yet</strong><span>Offer details will appear here.</span></div>{% endfor %}
+        </div>
+
+        <div class="content-card student-section-card">
+            <div class="card-header"><div><h2>Interview activity</h2><p>{{ interviews|length }} interview rounds and outcomes.</p></div><a class="btn btn-quiet" href="{{ url_for('interviews') }}">View all</a></div>
+            {% for interview in interviews[:3] %}
+            <div class="student-interview-row">
+                <span class="record-icon"><i class="fa-regular fa-calendar"></i></span>
+                <div>
+                    <strong>{{ interview['round'] }} round · {{ interview['role'] }}</strong>
+                    <small>{{ interview['company_name'] }} · {{ interview['interview_date'] }} at {{ interview['interview_time'] }}</small>
+                    {% if interview['venue'] %}<small><i class="fa-solid fa-location-dot"></i> {{ interview['venue'] }}</small>{% endif %}
+                </div>
+                <span class="record-status record-status-{{ interview['status']|lower|replace(' ', '-') }}">{{ interview['status'] }}</span>
+            </div>
+            {% else %}<div class="empty-state"><i class="fa-regular fa-calendar-xmark"></i><strong>No interviews scheduled</strong><span>Scheduled interviews will appear here.</span></div>{% endfor %}
+        </div>
+    </div>
+</div>
+{% endblock %}

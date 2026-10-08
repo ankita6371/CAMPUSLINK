@@ -1,0 +1,94 @@
+{% extends "base.html" %}
+
+{% block title %}Users & Roles | CAMPUSLINK{% endblock %}
+
+{% block content %}
+<div class="page-header rbac-header">
+    <div>
+        <div class="eyebrow"><i class="fa-solid fa-user-shield"></i> Access management</div>
+        <h1>Users &amp; Roles</h1>
+        <p>Create trusted staff accounts and link student logins to their own campus profile.</p>
+    </div>
+    <span class="rbac-header-badge"><i class="fa-solid fa-lock"></i> Administrator access</span>
+</div>
+
+{% with messages = get_flashed_messages(with_categories=true) %}
+{% for category, message in messages %}
+<div class="rbac-flash rbac-flash-{{ category }}" role="status">{{ message }}</div>
+{% endfor %}
+{% endwith %}
+
+<div class="rbac-layout">
+    <section class="content-card rbac-create-card">
+        <div class="card-header">
+            <div><span class="eyebrow">New account</span><h2>Invite a user</h2><p>Passwords are securely hashed before they are saved.</p></div>
+            <span class="rbac-card-icon"><i class="fa-solid fa-user-plus"></i></span>
+        </div>
+        <form method="post" class="rbac-form">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <label>Username<input name="username" minlength="3" maxlength="32" pattern="[A-Za-z0-9_.-]{3,32}" autocomplete="username" required><small>Used to sign in. Letters, numbers, dots, dashes, or underscores.</small></label>
+            <label>Full name<input name="name" maxlength="100" autocomplete="name" required></label>
+            <label>Email address<input name="email" type="email" autocomplete="email" required></label>
+            <label>Temporary password<input name="password" type="password" minlength="12" autocomplete="new-password" required><small>At least 12 characters. Share it securely and ask the user to change it.</small></label>
+            <label>Role
+                <select name="role" id="accountRole" required>
+                    <option value="placement_officer">Placement Officer</option>
+                    <option value="student">Student</option>
+                    <option value="admin">Administrator</option>
+                </select>
+            </label>
+            <label id="studentAccountField">Student profile
+                <select name="student_id" id="studentAccountId">
+                    <option value="">Choose the matching student</option>
+                    {% for student in students %}
+                    <option value="{{ student['id'] }}">{{ student['name'] }} · {{ student['registration_no'] }} · {{ student['branch'] }}</option>
+                    {% endfor %}
+                </select>
+                <small>Required for student accounts. Each student profile can be linked once.</small>
+            </label>
+            <button class="btn btn-primary" type="submit"><i class="fa-solid fa-user-check"></i> Create account</button>
+        </form>
+    </section>
+
+    <section class="content-card rbac-account-card">
+        <div class="card-header">
+            <div><span class="eyebrow">Directory</span><h2>Platform accounts</h2><p>{{ users|length }} active or inactive account{{ '' if users|length == 1 else 's' }}.</p></div>
+        </div>
+        <div class="rbac-account-list">
+            {% for user in users %}
+            <article class="rbac-account-row">
+                <span class="rbac-avatar">{{ user['name'][:1]|upper }}</span>
+                <div class="rbac-account-details">
+                    <strong>{{ user['name'] }}</strong>
+                    <span>{{ user['username'] }}{% if user['email'] %} · {{ user['email'] }}{% endif %}</span>
+                    {% if user['student_name'] %}<small>{{ user['student_name'] }} · {{ user['registration_no'] }}</small>{% endif %}
+                </div>
+                <div class="rbac-account-tags">
+                    <span class="rbac-role rbac-role-{{ user['role'] }}">{{ role_labels.get(user['role'], user['role']) }}</span>
+                    <span class="rbac-state {{ 'is-active' if user['is_active'] else 'is-inactive' }}">{{ 'Active' if user['is_active'] else 'Disabled' }}</span>
+                </div>
+            </article>
+            {% else %}
+            <div class="rbac-empty"><i class="fa-solid fa-users"></i><strong>No accounts yet</strong><span>Create your first platform user.</span></div>
+            {% endfor %}
+        </div>
+    </section>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+(() => {
+    const role = document.getElementById("accountRole");
+    const field = document.getElementById("studentAccountField");
+    const student = document.getElementById("studentAccountId");
+    const updateStudentField = () => {
+        const isStudent = role.value === "student";
+        field.hidden = !isStudent;
+        student.required = isStudent;
+    };
+    role.addEventListener("change", updateStudentField);
+    updateStudentField();
+})();
+</script>
+{% endblock %}

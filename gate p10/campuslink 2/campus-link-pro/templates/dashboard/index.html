@@ -1,0 +1,860 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard | CAMPUSLINK{% endblock %}
+
+{% block content %}
+
+
+<div class="page-header dashboard-header">
+
+    <div class="page-title">
+        <h1>Placement Dashboard</h1>
+        <p>Monitor your campus placement activities and performance.</p>
+    </div>
+
+    
+    <div style="position:relative;">
+
+        <button
+            type="button"
+            class="btn btn-primary"
+            onclick="toggleQuickActions()"
+        >
+            <i class="fa-solid fa-plus"></i>
+            Quick Action
+        </button>
+
+        <div
+            id="quickActionMenu"
+            style="
+                display:none;
+                position:absolute;
+                right:0;
+                top:48px;
+                width:210px;
+                background:white;
+                border:1px solid #e5e7eb;
+                border-radius:10px;
+                box-shadow:0 10px 30px rgba(0,0,0,0.10);
+                padding:8px;
+                z-index:1000;
+            "
+        >
+
+            <a
+                href="{{ url_for('add_company') }}"
+                class="quick-action-item"
+            >
+                <i class="fa-solid fa-building"></i>
+                Add Company
+            </a>
+
+            <a
+                href="{{ url_for('students') }}"
+                class="quick-action-item"
+            >
+                <i class="fa-solid fa-user-graduate"></i>
+                Students
+            </a>
+
+            <a
+                href="{{ url_for('jobs') }}"
+                class="quick-action-item"
+            >
+                <i class="fa-solid fa-briefcase"></i>
+                Job Drives
+            </a>
+
+            <a
+                href="{{ url_for('matching') }}"
+                class="quick-action-item"
+            >
+                <i class="fa-solid fa-robot"></i>
+                AI Matching
+            </a>
+
+        </div>
+
+    </div>
+
+</div>
+
+
+
+<div class="stats-grid dashboard-stats">
+
+    
+    <a
+        href="{{ url_for('students') }}"
+        style="text-decoration:none;color:inherit;"
+        title="View all student records"
+    >
+        <div class="stat-card">
+
+            <div class="stat-top">
+                <div class="stat-icon">
+                    <i class="fa-solid fa-user-graduate"></i>
+                </div>
+
+                <span class="stat-label">
+                    Total Students
+                </span>
+            </div>
+
+            <div class="stat-value">
+                {{ total_students }}
+            </div>
+
+            <div class="stat-change">
+                Student records
+            </div>
+
+        </div>
+    </a>
+
+
+    
+    <a
+        href="{{ url_for('students') }}"
+        style="text-decoration:none;color:inherit;"
+        title="View eligible student records"
+    >
+        <div class="stat-card">
+
+            <div class="stat-top">
+                <div class="stat-icon">
+                    <i class="fa-solid fa-user-check"></i>
+                </div>
+
+                <span class="stat-label">
+                    Eligible Students
+                </span>
+            </div>
+
+            <div class="stat-value">
+                {{ eligible_students }}
+            </div>
+
+            <div class="stat-change">
+                Qualified for an open drive
+            </div>
+
+        </div>
+    </a>
+
+
+    
+    <a
+        href="{{ url_for('companies') }}"
+        style="text-decoration:none;color:inherit;"
+        title="View all companies"
+    >
+        <div class="stat-card">
+
+            <div class="stat-top">
+                <div class="stat-icon">
+                    <i class="fa-solid fa-building"></i>
+                </div>
+
+                <span class="stat-label">
+                    Companies
+                </span>
+            </div>
+
+            <div class="stat-value">
+                {{ total_companies }}
+            </div>
+
+            <div class="stat-change">
+                Recruiting partners
+            </div>
+
+        </div>
+    </a>
+
+
+    
+    <a
+        href="{{ url_for('jobs') }}"
+        style="text-decoration:none;color:inherit;"
+        title="View active job drives"
+    >
+        <div class="stat-card">
+
+            <div class="stat-top">
+                <div class="stat-icon">
+                    <i class="fa-solid fa-briefcase"></i>
+                </div>
+
+                <span class="stat-label">
+                    Active Job Drives
+                </span>
+            </div>
+
+            <div class="stat-value">
+                {{ active_jobs }}
+            </div>
+
+            <div class="stat-change">
+                Drives accepting applications
+            </div>
+
+        </div>
+    </a>
+
+
+    
+    <a
+        href="{{ url_for('applications') }}"
+        style="text-decoration:none;color:inherit;"
+        title="View all applications"
+    >
+        <div class="stat-card">
+
+            <div class="stat-top">
+                <div class="stat-icon">
+                    <i class="fa-solid fa-file-lines"></i>
+                </div>
+
+                <span class="stat-label">
+                    Applications
+                </span>
+            </div>
+
+            <div class="stat-value">
+                {{ total_applications }}
+            </div>
+
+            <div class="stat-change">
+                Placement applications
+            </div>
+
+        </div>
+    </a>
+
+
+    
+    <a
+        href="{{ url_for('interviews') }}"
+        style="text-decoration:none;color:inherit;"
+        title="View scheduled interviews"
+    >
+        <div class="stat-card">
+
+            <div class="stat-top">
+                <div class="stat-icon">
+                    <i class="fa-solid fa-calendar-check"></i>
+                </div>
+
+                <span class="stat-label">
+                    Interviews
+                </span>
+            </div>
+
+            <div class="stat-value">
+                {{ total_interviews }}
+            </div>
+
+            <div class="stat-change">
+                View interviews
+            </div>
+
+        </div>
+    </a>
+
+
+    
+    <a
+        href="{{ url_for('offers') }}"
+        style="text-decoration:none;color:inherit;"
+        title="View all offers"
+    >
+        <div class="stat-card">
+
+            <div class="stat-top">
+                <div class="stat-icon">
+                    <i class="fa-solid fa-award"></i>
+                </div>
+
+                <span class="stat-label">
+                    Offers
+                </span>
+            </div>
+
+            <div class="stat-value">
+                {{ total_offers }}
+            </div>
+
+            <div class="stat-change">
+                Offer records
+            </div>
+
+        </div>
+    </a>
+
+
+    
+    <a
+        href="{{ url_for('students') }}"
+        style="text-decoration:none;color:inherit;"
+        title="View placed students"
+    >
+        <div class="stat-card">
+
+            <div class="stat-top">
+                <div class="stat-icon">
+                    <i class="fa-solid fa-circle-check"></i>
+                </div>
+
+                <span class="stat-label">Placed Students</span>
+            </div>
+
+            <div class="stat-value">
+                {{ placed_students }}
+            </div>
+
+            <div class="stat-change">
+                Students with accepted offers
+            </div>
+
+        </div>
+    </a>
+
+</div>
+
+
+
+<div class="content-grid dashboard-grid">
+
+    
+    <div class="card dashboard-ai-card">
+
+        <div class="card-header">
+
+            <div>
+                <h3>Placement by Branch</h3>
+                <span>Current placement distribution</span>
+            </div>
+
+            <a
+                href="{{ url_for('analytics') }}"
+                class="btn btn-secondary"
+                title="Open detailed analytics"
+            >
+                View Details
+            </a>
+
+        </div>
+
+
+        <div
+            style="
+                height:260px;
+                display:flex;
+                align-items:flex-end;
+                justify-content:space-around;
+                padding:20px;
+                gap:25px;
+            "
+        >
+
+            <div
+                title="CSE placement distribution"
+                class="branch-bar"
+                style="height:160px;"
+            >
+                <span>CSE</span>
+            </div>
+
+            <div
+                title="ECE placement distribution"
+                class="branch-bar"
+                style="height:125px;"
+            >
+                <span>ECE</span>
+            </div>
+
+            <div
+                title="EEE placement distribution"
+                class="branch-bar"
+                style="height:105px;"
+            >
+                <span>EEE</span>
+            </div>
+
+            <div
+                title="ME placement distribution"
+                class="branch-bar"
+                style="height:85px;"
+            >
+                <span>ME</span>
+            </div>
+
+            <div
+                title="CE placement distribution"
+                class="branch-bar"
+                style="height:65px;"
+            >
+                <span>CE</span>
+            </div>
+
+        </div>
+
+    </div>
+
+
+    
+    <div class="card dashboard-ai-card">
+
+        <div class="card-header">
+
+            <div>
+                <h3>Placement Summary</h3>
+                <span>Overall student status</span>
+            </div>
+
+        </div>
+
+
+        {% set placement_percentage = ((placed_students / total_students) * 100)|round(1) if total_students > 0 else 0 %}
+        {% set unplaced_students = total_students - placed_students %}
+        {% set unplaced_percentage = ((unplaced_students / total_students) * 100)|round(1) if total_students > 0 else 0 %}
+        {% set placed_degrees = (placement_percentage * 3.6)|round(1) %}
+
+
+        
+        <div
+            style="
+                display:flex;
+                justify-content:center;
+                margin:15px 0 25px;
+            "
+        >
+<div
+    class="placement-donut"
+    data-placement-rate="{{ placement_percentage }}"
+    title="Placed: {{ placed_students }} students ({{ placement_percentage }}%) | Unplaced: {{ unplaced_students }} students ({{ unplaced_percentage }}%)"
+>
+
+
+                    <strong style="font-size:25px;">
+                        {{ placement_percentage }}%
+                    </strong>
+
+                    <span
+                        style="
+                            font-size:9px;
+                            color:#6b7280;
+                        "
+                    >
+                        Placement Rate
+                    </span>
+
+                </div>
+
+            </div>
+
+        </div>
+
+
+        
+        <div
+            style="
+                display:grid;
+                grid-template-columns:1fr 1fr;
+                gap:12px;
+            "
+        >
+
+            <div
+                title="Placed: {{ placed_students }} students ({{ placement_percentage }}%)"
+                style="
+                    padding:12px;
+                    border-radius:10px;
+                    cursor:pointer;
+                    transition:all .2s ease;
+                "
+                onmouseover="this.style.background='#eef2ff'; this.style.transform='translateY(-2px)'"
+                onmouseout="this.style.background='transparent'; this.style.transform='translateY(0)'"
+            >
+
+                <span
+                    style="
+                        font-size:10px;
+                        color:#6b7280;
+                    "
+                >
+                    Placed
+                </span>
+
+                <h3>
+                    {{ placed_students }}
+                </h3>
+
+                <small style="color:#4f46e5;">
+                    {{ placement_percentage }}%
+                </small>
+
+            </div>
+
+
+            <div
+                title="Unplaced: {{ unplaced_students }} students ({{ unplaced_percentage }}%)"
+                style="
+                    padding:12px;
+                    border-radius:10px;
+                    cursor:pointer;
+                    transition:all .2s ease;
+                "
+                onmouseover="this.style.background='#f5f7ff'; this.style.transform='translateY(-2px)'"
+                onmouseout="this.style.background='transparent'; this.style.transform='translateY(0)'"
+            >
+
+                <span
+                    style="
+                        font-size:10px;
+                        color:#6b7280;
+                    "
+                >
+                    Unplaced
+                </span>
+
+                <h3>
+                    {{ unplaced_students if unplaced_students > 0 else 0 }}
+                </h3>
+
+                <small style="color:#6b7280;">
+                    {{ unplaced_percentage }}%
+                </small>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+
+
+<div class="content-grid dashboard-grid dashboard-secondary-grid">
+
+    
+    <div class="card dashboard-ai-card">
+
+        <div class="card-header">
+
+            <div>
+                <h3>Placement activity</h3>
+                <span>Applications, interview rounds, and offers tracked</span>
+            </div>
+            <span class="placement-activity-total" title="Applications + interviews + offers">{{ placement_activity }}<small>Total events</small></span>
+
+            <a
+                href="{{ url_for('applications') }}"
+                class="btn btn-secondary"
+                title="View all applications"
+            >
+                View All
+            </a>
+
+        </div>
+
+
+        <div class="placement-activity-list">
+            <a href="{{ url_for('applications') }}" class="placement-activity-row">
+                <span class="placement-activity-icon application-activity-icon"><i class="fa-solid fa-file-lines"></i></span>
+                <span class="placement-activity-copy"><strong>Applications</strong><small>Candidate applications recorded</small></span>
+                <strong class="placement-activity-count">{{ total_applications }}</strong>
+            </a>
+            <a href="{{ url_for('interviews') }}" class="placement-activity-row">
+                <span class="placement-activity-icon interview-activity-icon"><i class="fa-solid fa-calendar-check"></i></span>
+                <span class="placement-activity-copy"><strong>Interviews</strong><small>Interview rounds scheduled or completed</small></span>
+                <strong class="placement-activity-count">{{ total_interviews }}</strong>
+            </a>
+            <a href="{{ url_for('offers') }}" class="placement-activity-row">
+                <span class="placement-activity-icon offer-activity-icon"><i class="fa-solid fa-award"></i></span>
+                <span class="placement-activity-copy"><strong>Offers</strong><small>Offer decisions tracked</small></span>
+                <strong class="placement-activity-count">{{ total_offers }}</strong>
+            </a>
+            <div class="placement-activity-note">
+                <i class="fa-solid fa-circle-info"></i>
+                Activity is the sum of records across these three stages; it is not a student or placement count.
+            </div>
+        </div>
+
+    </div>
+
+
+    
+    <div class="card dashboard-ai-card">
+
+        <div class="card-header">
+
+            <div>
+                <h3>Upcoming Interviews</h3>
+                <span>Next scheduled interview rounds</span>
+            </div>
+
+            <a
+                href="{{ url_for('interviews') }}"
+                class="btn btn-secondary"
+                title="View all interviews"
+            >
+                View All
+            </a>
+
+        </div>
+
+
+        <div class="upcoming-interview-list">
+            {% for interview in upcoming_interviews %}
+            <a class="upcoming-interview-row" href="{{ url_for('interviews') }}">
+                <span class="upcoming-interview-icon"><i class="fa-solid fa-calendar-day"></i></span>
+                <span class="upcoming-interview-copy">
+                    <strong>{{ interview['student_name'] }}</strong>
+                    <small>{{ interview['company_name'] }} · {{ interview['role'] }}</small>
+                    <small>{{ interview['round'] }} · {{ interview['venue'] }}</small>
+                </span>
+                <span class="upcoming-interview-date">
+                    {{ interview['interview_date'] }}<small>{{ interview['interview_time'] }}</small>
+                </span>
+            </a>
+            {% else %}
+            <div class="dashboard-empty-state">
+                <i class="fa-regular fa-calendar-xmark"></i>
+                <strong>No upcoming interviews</strong>
+                <span>Scheduled interview rounds will appear here.</span>
+            </div>
+            {% endfor %}
+        </div>
+
+    </div>
+
+</div>
+
+
+
+
+<div
+    class="card dashboard-ai-card dashboard-promo"
+    style="
+        background:
+        linear-gradient(
+            135deg,
+        );
+        border-color:#e0e7ff;
+        margin-top:20px;
+    "
+>
+
+    <div
+        style="
+            display:flex;
+            align-items:center;
+            justify-content:space-between;
+            gap:20px;
+        "
+    >
+
+        <div>
+
+            <span
+                style="
+                    display:inline-block;
+                    background:#4f46e5;
+                    color:white;
+                    padding:5px 9px;
+                    border-radius:20px;
+                    font-size:9px;
+                    font-weight:600;
+                    margin-bottom:10px;
+                "
+            >
+                AI POWERED
+            </span>
+
+            <h2
+                style="
+                    font-size:18px;
+                    margin-bottom:6px;
+                "
+            >
+                Find the right candidate faster
+            </h2>
+
+            <p
+                style="
+                    font-size:12px;
+                    color:#6b7280;
+                    max-width:600px;
+                "
+            >
+                Use CAMPUSLINK's intelligent matching engine
+                to compare student skills, CGPA, branch and
+                eligibility requirements.
+            </p>
+
+            <a
+                href="{{ url_for('matching') }}"
+                class="btn btn-primary"
+                style="margin-top:15px;"
+                title="Open AI Candidate Matching"
+            >
+                <i class="fa-solid fa-robot"></i>
+                Open AI Matching
+            </a>
+
+        </div>
+
+
+        <div
+            title="AI-powered candidate matching"
+            style="
+                font-size:80px;
+                color:#c7d2fe;
+                padding-right:30px;
+            "
+        >
+            <i class="fa-solid fa-brain"></i>
+        </div>
+
+    </div>
+
+</div>
+
+
+
+<style>
+
+.quick-action-item {
+    display:flex;
+    align-items:center;
+    gap:10px;
+    padding:10px;
+    text-decoration:none;
+    color:#374151;
+    border-radius:7px;
+    transition:all .2s ease;
+}
+
+.quick-action-item:hover {
+    background:#f3f4f6;
+    transform:translateX(2px);
+}
+
+.stat-card {
+    transition:all .2s ease;
+}
+
+.stat-card:hover {
+    transform:translateY(-3px);
+}
+
+.placement-donut:hover {
+    transform:scale(1.05);
+}
+
+.branch-bar {
+    width:45px;
+    background:#6366f1;
+    border-radius:8px 8px 0 0;
+    position:relative;
+    transition:all .2s ease;
+    cursor:pointer;
+}
+
+.branch-bar:hover {
+    transform:translateY(-5px);
+}
+
+.branch-bar span {
+    position:absolute;
+    bottom:-25px;
+    left:50%;
+    transform:translateX(-50%);
+    font-size:10px;
+    white-space:nowrap;
+}
+
+.dashboard-ai-card {
+    overflow: hidden;
+}
+
+.dashboard-ai-card > div {
+    padding-left: 20px;
+    padding-right: 20px;
+    box-sizing: border-box;
+}
+
+.dashboard-ai-card h2 {
+    margin-left: 0 !important;
+    padding-left: 0 !important;
+}
+
+.dashboard-ai-card p {
+    margin-left: 0 !important;
+    padding-left: 0 !important;
+}
+
+</style>
+
+
+
+<script>
+
+function toggleQuickActions() {
+
+    const menu = document.getElementById("quickActionMenu");
+
+    if (!menu) {
+        return;
+    }
+
+    if (menu.style.display === "none" || menu.style.display === "") {
+        menu.style.display = "block";
+    } else {
+        menu.style.display = "none";
+    }
+
+}
+
+
+document.addEventListener("click", function(event) {
+
+    const menu = document.getElementById("quickActionMenu");
+
+    if (!menu) {
+        return;
+    }
+
+    const button = event.target.closest(".btn-primary");
+
+    if (
+        menu &&
+        !menu.contains(event.target) &&
+        !button
+    ) {
+        menu.style.display = "none";
+    }
+
+});
+
+</script>
+<script>
+document.querySelectorAll(".placement-donut").forEach(function (donut) {
+
+    const rate = parseFloat(
+        donut.dataset.placementRate
+    ) || 0;
+
+    donut.style.setProperty(
+        "--placement-rate",
+        rate + "%"
+    );
+
+});
+</script>
+
+
+{% endblock %}

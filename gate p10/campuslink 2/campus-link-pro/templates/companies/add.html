@@ -1,0 +1,149 @@
+{% extends "base.html" %}
+
+{% block title %}Add Company | CAMPUSLINK{% endblock %}
+
+{% block content %}
+
+<div class="page-header">
+
+```
+<div>
+    <h1>Add Company</h1>
+    <p>Add a new recruiting company to CAMPUSLINK.</p>
+</div>
+
+<div class="page-actions">
+
+    <a
+        href="/companies"
+        class="btn btn-secondary"
+    >
+        ← Back to Companies
+    </a>
+
+</div>
+```
+
+</div>
+
+<div class="content-card">
+
+```
+<div class="section-header">
+
+    <div>
+        <h2>Company Information</h2>
+        <p>Enter the basic details of the recruiting company.</p>
+    </div>
+
+</div>
+
+
+<form
+    method="POST"
+    action="{{ url_for('add_company') }}"
+>
+
+    <div class="form-grid">
+
+        
+
+        <div class="form-group">
+
+            <label for="name">
+                Company Name <span>*</span>
+            </label>
+
+            <input
+                type="text"
+                id="name"
+                name="name"
+                placeholder="e.g. TCS"
+                required
+            >
+
+        </div>
+
+
+        
+
+        <div class="form-group">
+
+            <label for="industry">
+                Industry
+            </label>
+
+            <input
+                type="text"
+                id="industry"
+                name="industry"
+                placeholder="e.g. Information Technology"
+            >
+
+        </div>
+
+
+        
+
+        <div class="form-group">
+
+            <label for="location">
+                Location
+            </label>
+
+            <input
+                type="text"
+                id="location"
+                name="location"
+                placeholder="e.g. Bhubaneswar, Odisha"
+            >
+
+        </div>
+
+
+        
+
+        <div class="form-group">
+
+            <label for="website">
+                Website
+            </label>
+
+            <input
+                type="url"
+                id="website"
+                name="website"
+                placeholder="https://example.com"
+            >
+
+        </div>
+
+    </div>
+
+
+    
+
+    <div class="form-actions">
+
+        <a
+            href="/companies"
+            class="btn btn-secondary"
+        >
+            Cancel
+        </a>
+
+        <button
+            type="submit"
+            class="btn btn-primary"
+        >
+            + Add Company
+        </button>
+
+    </div>
+
+</form>
+```
+
+</div>
+
+{% endblock %}

@@ -1,0 +1,354 @@
+```html
+{% extends "base.html" %}
+
+{% block title %}Add Student | CAMPUSLINK{% endblock %}
+
+{% block content %}
+
+
+<div class="page-header">
+
+    <div>
+        <h1>Add Student</h1>
+        <p>Add a new student to the CAMPUSLINK placement database.</p>
+    </div>
+
+    <div class="page-header-actions">
+
+        <a href="/students" class="btn btn-secondary">
+            <i class="fa-solid fa-arrow-left"></i>
+            Back to Students
+        </a>
+
+    </div>
+
+</div>
+
+
+
+<div class="content-card">
+
+    <div class="card-header">
+
+        <div>
+            <h2>Student Information</h2>
+            <p>Enter the student's academic and contact details.</p>
+        </div>
+
+    </div>
+
+
+    <form method="POST" action="/students/add">
+
+
+        
+        <div class="form-section">
+
+            <h3>
+                <i class="fa-solid fa-user"></i>
+                Personal Information
+            </h3>
+
+            <div class="form-grid">
+
+
+                <div class="form-group">
+
+                    <label for="name">
+                        Student Name
+                        <span class="required">*</span>
+                    </label>
+
+                    <input
+                        type="text"
+                        id="name"
+                        name="name"
+                        placeholder="Enter full name"
+                        required
+                    >
+
+                </div>
+
+
+                <div class="form-group">
+
+                    <label for="registration_no">
+                        Registration Number
+                        <span class="required">*</span>
+                    </label>
+
+                    <input
+                        type="text"
+                        id="registration_no"
+                        name="registration_no"
+                        placeholder="Example: GATE2026001"
+                        required
+                    >
+
+                </div>
+
+
+                <div class="form-group">
+
+                    <label for="email">
+                        Email Address
+                    </label>
+
+                    <input
+                        type="email"
+                        id="email"
+                        name="email"
+                        placeholder="student@example.com"
+                    >
+
+                </div>
+
+
+                <div class="form-group">
+
+                    <label for="phone">
+                        Phone Number
+                    </label>
+
+                    <input
+                        type="tel"
+                        id="phone"
+                        name="phone"
+                        placeholder="Enter phone number"
+                    >
+
+                </div>
+
+            </div>
+
+        </div>
+
+
+        
+        <div class="form-section">
+
+            <h3>
+                <i class="fa-solid fa-graduation-cap"></i>
+                Academic Information
+            </h3>
+
+            <div class="form-grid">
+
+
+                <div class="form-group">
+
+                    <label for="branch">
+                        Branch
+                        <span class="required">*</span>
+                    </label>
+
+                    <select
+                        id="branch"
+                        name="branch"
+                        required
+                    >
+
+                        <option value="">
+                            Select Branch
+                        </option>
+
+                        <option value="CSE">
+                            Computer Science & Engineering
+                        </option>
+
+                        <option value="ECE">
+                            Electronics & Communication Engineering
+                        </option>
+
+                        <option value="EEE">
+                            Electrical & Electronics Engineering
+                        </option>
+
+                        <option value="ME">
+                            Mechanical Engineering
+                        </option>
+
+                        <option value="Civil">
+                            Civil Engineering
+                        </option>
+
+                        <option value="IT">
+                            Information Technology
+                        </option>
+
+                        <option value="Other">
+                            Other
+                        </option>
+
+                    </select>
+
+                </div>
+
+
+                <div class="form-group">
+
+                    <label for="cgpa">
+                        CGPA
+                        <span class="required">*</span>
+                    </label>
+
+                    <input
+                        type="number"
+                        id="cgpa"
+                        name="cgpa"
+                        min="0"
+                        max="10"
+                        step="0.01"
+                        placeholder="Example: 8.25"
+                        required
+                    >
+
+                </div>
+
+
+                <div class="form-group">
+
+                    <label for="backlogs">
+                        Backlogs
+                    </label>
+
+                    <input
+                        type="number"
+                        id="backlogs"
+                        name="backlogs"
+                        min="0"
+                        value="0"
+                        placeholder="Number of backlogs"
+                    >
+
+                </div>
+
+
+                <div class="form-group">
+
+                    <label for="attendance">
+                        Attendance (%)
+                    </label>
+
+                    <input
+                        type="number"
+                        id="attendance"
+                        name="attendance"
+                        min="0"
+                        max="100"
+                        step="0.01"
+                        value="0"
+                        placeholder="Example: 85"
+                    >
+
+                </div>
+
+            </div>
+
+        </div>
+
+
+        
+        <div class="form-section">
+
+            <h3>
+                <i class="fa-solid fa-code"></i>
+                Technical Skills
+            </h3>
+
+            <div class="form-group">
+
+                <label for="skills">
+                    Skills
+                </label>
+
+                <textarea
+                    id="skills"
+                    name="skills"
+                    rows="4"
+                    placeholder="Example: Python, Flask, HTML, CSS, JavaScript, SQL"
+                ></textarea>
+
+                <small class="form-help">
+                    Separate multiple skills using commas.
+                </small>
+
+            </div>
+
+        </div>
+
+
+        
+        <div class="form-section">
+
+            <h3>
+                <i class="fa-solid fa-briefcase"></i>
+                Placement Information
+            </h3>
+
+            <div class="form-grid">
+
+
+                <div class="form-group">
+
+                    <label for="placement_status">
+                        Placement Status
+                    </label>
+
+                    <select
+                        id="placement_status"
+                        name="placement_status"
+                    >
+
+                        <option value="Unplaced">
+                            Unplaced
+                        </option>
+
+                        <option value="Eligible">
+                            Eligible
+                        </option>
+
+                        <option value="In Process">
+                            In Process
+                        </option>
+
+                        <option value="Placed">
+                            Placed
+                        </option>
+
+                    </select>
+
+                </div>
+
+            </div>
+
+        </div>
+
+
+        
+        <div class="form-actions">
+
+            <a
+                href="/students"
+                class="btn btn-secondary"
+            >
+                Cancel
+            </a>
+
+            <button
+                type="submit"
+                class="btn btn-primary"
+            >
+                <i class="fa-solid fa-save"></i>
+                Save Student
+            </button>
+
+        </div>
+
+
+    </form>
+
+</div>
+
+{% endblock %}
+```

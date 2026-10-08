@@ -1,0 +1,727 @@
+{% extends "base.html" %}
+
+{% block title %}Students | CAMPUSLINK{% endblock %}
+
+{% block content %}
+
+<div class="students-page">
+
+    
+    <div class="page-header">
+
+        <div>
+            <h1>Students</h1>
+            <p>Manage student records and placement information.</p>
+        </div>
+
+        <div class="page-header-actions">
+
+            <button
+                type="button"
+                class="btn btn-secondary"
+                onclick="exportStudents()"
+            >
+                ↓ Export
+            </button>
+
+            <a
+                href="{{ url_for('add_student') }}"
+                class="btn btn-primary"
+            >
+                + Add Student
+            </a>
+
+        </div>
+
+    </div>
+
+
+    
+    <div class="student-filter-panel content-card">
+        <div class="student-filter-toolbar">
+            <input
+                type="search"
+                id="studentSearch"
+                class="student-search"
+                placeholder="Search name, registration, or email..."
+                autocomplete="off"
+                aria-label="Search students"
+            >
+            <select id="branchFilter" class="student-filter" aria-label="Filter students by branch">
+                <option value="all">All Branches</option>
+                {% for branch in branch_options %}
+                <option value="{{ branch|lower }}">{{ branch }}</option>
+                {% endfor %}
+            </select>
+            <select id="statusFilter" class="student-filter" aria-label="Filter students by placement status">
+                <option value="all">All Statuses</option>
+                {% for placement_status in status_options %}
+                <option value="{{ placement_status|lower }}">{{ placement_status }}</option>
+                {% endfor %}
+            </select>
+            <div class="student-skill-filter" id="studentSkillFilter">
+                <button class="student-skill-trigger" id="studentSkillTrigger" type="button"
+                        aria-haspopup="true" aria-expanded="false" aria-controls="studentSkillMenu">
+                    <i class="fa-solid fa-code"></i>
+                    <span id="studentSkillLabel">All skills</span>
+                    <i class="fa-solid fa-chevron-down student-skill-chevron"></i>
+                </button>
+                <div class="student-skill-menu" id="studentSkillMenu" hidden>
+                    <div class="student-skill-menu-heading">
+                        <strong>Filter by skills</strong>
+                        <span>Select one or more skills</span>
+                    </div>
+                    <label class="student-skill-option student-skill-search">
+                        <i class="fa-solid fa-magnifying-glass"></i>
+                        <input id="studentSkillSearch" type="search" placeholder="Find a skill..." autocomplete="off">
+                    </label>
+                    <div class="student-skill-options" id="studentSkillOptions">
+                        {% for skill in skill_options %}
+                        <label class="student-skill-option" data-skill-option="{{ skill|lower }}">
+                            <input type="checkbox" value="{{ skill|lower }}">
+                            <span>{{ skill }}</span>
+                        </label>
+                        {% else %}
+                        <p class="student-skill-empty">No skills have been added to student profiles yet.</p>
+                        {% endfor %}
+                    </div>
+                    <div class="student-skill-menu-footer">
+                        <span id="studentSkillSelected">No skills selected</span>
+                        <button class="btn btn-quiet" id="clearStudentSkills" type="button">Clear skills</button>
+                    </div>
+                </div>
+            </div>
+            <button type="button" class="btn btn-secondary student-clear-filters" id="clearStudentFilters">
+                <i class="fa-solid fa-rotate-left"></i> Clear filters
+            </button>
+        </div>
+        <div class="student-filter-summary">
+            <span><i class="fa-solid fa-users"></i> Showing <strong id="studentResultCount">{{ students|length }}</strong> of {{ students|length }} students</span>
+            <span class="student-filter-hint">Combine search, branch, status, and skills</span>
+        </div>
+    </div>
+
+
+    
+
+    {% if students %}
+
+    <div class="table-container student-table-container"
+        style="
+            width:100%;
+            overflow-x:auto;
+            background:#fff;
+            border:1px solid #e5e7eb;
+            border-radius:12px;
+        "
+    >
+
+        <table
+            id="studentsTable"
+            style="
+                width:100%;
+                min-width:1100px;
+                border-collapse:collapse;
+            "
+        >
+
+            <thead>
+
+                <tr>
+
+                    <th>Student</th>
+                    <th>Registration No.</th>
+                    <th>Branch</th>
+                    <th>CGPA</th>
+                    <th>Backlogs</th>
+                    <th>Attendance</th>
+                    <th>Status</th>
+                    <th>Actions</th>
+
+                </tr>
+
+            </thead>
+
+
+            <tbody>
+
+                {% for student in students %}
+
+                <tr
+                    class="student-row"
+                    data-name="{{ student['name']|lower }}"
+                    data-registration="{{ student['registration_no']|lower }}"
+                    data-email="{{ (student['email'] or '')|lower }}"
+                    data-branch="{{ student['branch']|lower }}"
+                    data-status="{{ student['placement_status']|lower }}"
+                    data-skills="{{ (student['skills'] or '')|lower|replace('\r', '')|replace('\n', ',')|replace(';', ',') }}"
+                >
+
+                    
+
+                    <td>
+
+                        <div
+                            style="
+                                display:flex;
+                                align-items:center;
+                                gap:10px;
+                            "
+                        >
+
+                            <div
+                                style="
+                                    width:38px;
+                                    height:38px;
+                                    border-radius:50%;
+                                    background:#eef2ff;
+                                    display:flex;
+                                    align-items:center;
+                                    justify-content:center;
+                                    font-weight:700;
+                                "
+                            >
+                                {{ student['name'][0]|upper }}
+                            </div>
+
+                            <div>
+
+                                <strong>
+                                    {{ student['name'] }}
+                                </strong>
+
+                                {% if student['email'] %}
+                                <small
+                                    style="
+                                        display:block;
+                                        color:#9ca3af;
+                                    "
+                                >
+                                    {{ student['email'] }}
+                                </small>
+                                {% endif %}
+
+                            </div>
+
+                        </div>
+
+                    </td>
+
+
+                    
+
+                    <td>
+                        {{ student['registration_no'] }}
+                    </td>
+
+
+                    
+
+                    <td class="branch-cell">
+                        {{ student['branch'] }}
+                    </td>
+
+
+                    
+
+                    <td>
+                        <strong>
+                            {{ "%.2f"|format(student['cgpa']) }}
+                        </strong>
+                    </td>
+
+
+                    
+
+                    <td>
+
+                        {% if student['backlogs'] == 0 %}
+
+                        <span class="badge badge-success">
+                            No Backlogs
+                        </span>
+
+                        {% else %}
+
+                        <span class="badge badge-danger">
+                            {{ student['backlogs'] }}
+                        </span>
+
+                        {% endif %}
+
+                    </td>
+
+
+                    
+
+                    <td>
+                        {{ "%.1f"|format(student['attendance']) }}%
+                    </td>
+
+
+                    
+
+                    <td class="status-cell">
+
+                        {% if student['placement_status'] == "Placed" %}
+
+                        <span class="badge badge-success">
+                            Placed
+                        </span>
+
+                        {% elif student['placement_status'] == "In Process" %}
+
+                        <span class="badge badge-warning">
+                            In Process
+                        </span>
+
+                        {% else %}
+
+                        <span class="badge badge-secondary">
+                            Unplaced
+                        </span>
+
+                        {% endif %}
+
+                    </td>
+
+
+                    
+
+                    <td>
+
+                        <div
+                            style="
+                                display:flex;
+                                gap:6px;
+                                white-space:nowrap;
+                            "
+                        >
+
+                            <a
+                                href="{{ url_for('view_student', student_id=student['id']) }}"
+                                class="action-btn"
+                                title="View"
+                            >
+                                👁
+                            </a>
+
+
+                            <a
+                                href="{{ url_for('edit_student', student_id=student['id']) }}"
+                                class="action-btn"
+                                title="Edit"
+                            >
+                                ✏
+                            </a>
+
+
+                            <form
+                                method="POST"
+                                action="{{ url_for('delete_student', student_id=student['id']) }}"
+                                ,onsubmit="return confirmDelete('{{ student['name']|e }}');"
+                                style="display:inline;"
+                            >
+
+                                <button
+                                    type="submit"
+                                    class="action-btn delete-btn"
+                                    title="Delete"
+                                >
+                                    🗑
+                                </button>
+
+                            </form>
+
+                        </div>
+
+                    </td>
+
+                </tr>
+
+                {% endfor %}
+
+            </tbody>
+
+        </table>
+
+    </div>
+
+
+    
+
+    <div
+        id="noResults"
+        class="student-no-results"
+        hidden
+    >
+        <i class="fa-solid fa-filter-circle-xmark"></i>
+        <strong>No students match these filters</strong>
+        <span>Try another branch, status, skill, or search term.</span>
+        <button type="button" class="btn btn-quiet" id="clearEmptyStudentFilters">Clear all filters</button>
+    </div>
+
+
+    {% else %}
+
+    
+
+    <div class="content-card">
+
+        <div style="text-align:center;padding:40px;">
+
+            <h3>No Students Found</h3>
+
+            <p>
+                Add a student to begin.
+            </p>
+
+            <a
+                href="{{ url_for('add_student') }}"
+                class="btn btn-primary"
+            >
+                + Add Student
+            </a>
+
+        </div>
+
+    </div>
+
+    {% endif %}
+
+</div>
+
+
+
+
+<script>
+
+function filterStudents() {
+    const searchInput = document.getElementById("studentSearch");
+    const branchFilter = document.getElementById("branchFilter");
+    const statusFilter = document.getElementById("statusFilter");
+    const table = document.getElementById("studentsTable");
+    if (!searchInput || !branchFilter || !statusFilter || !table) return;
+
+    const normalize = function(value) {
+        return String(value || "")
+            .normalize("NFKC")
+            .trim()
+            .replace(/\s+/g, " ")
+            .toLowerCase();
+    };
+
+    const search =
+        normalize(searchInput.value);
+
+    const branch =
+        normalize(branchFilter.value);
+
+    const status =
+        normalize(statusFilter.value);
+
+    const selectedSkills = Array.from(
+        document.querySelectorAll("#studentSkillOptions input:checked")
+    ).map(function(input) {
+        return normalize(input.value);
+    });
+
+    const rows =
+        document.querySelectorAll(
+            "#studentsTable tbody .student-row"
+        );
+
+    let count = 0;
+
+    rows.forEach(function(row) {
+
+        const name = normalize(row.dataset.name);
+
+        const registration = normalize(row.dataset.registration);
+
+        const rowBranch = normalize(row.dataset.branch);
+
+        const rowStatus = normalize(row.dataset.status);
+        const rowSkills = (row.dataset.skills || "")
+            .split(/[,;\n\r]+/)
+            .map(normalize)
+            .filter(Boolean);
+
+
+        const searchMatch =
+            search === "" ||
+            name.includes(search) ||
+            registration.includes(search) ||
+            normalize(row.dataset.email).includes(search);
+
+
+        const branchMatch =
+            branch === "" ||
+            branch === "all" ||
+            rowBranch === branch;
+
+
+        const statusMatch =
+            status === "" ||
+            status === "all" ||
+            rowStatus === status;
+
+        const skillMatch =
+            selectedSkills.length === 0 ||
+            selectedSkills.some(function(skill) {
+                return rowSkills.includes(skill);
+            });
+
+        if (
+            searchMatch &&
+            branchMatch &&
+            statusMatch &&
+            skillMatch
+        ) {
+
+            row.hidden = false;
+            count++;
+
+        } else {
+
+            row.hidden = true;
+
+        }
+    });
+
+
+    const noResults =
+        document.getElementById("noResults");
+
+    if (noResults) {
+
+        noResults.hidden = count !== 0;
+
+    }
+
+    const resultCount = document.getElementById("studentResultCount");
+    if (resultCount) resultCount.textContent = count;
+    updateStudentSkillLabel();
+}
+
+function clearStudentFilters() {
+    const search = document.getElementById("studentSearch");
+    const branch = document.getElementById("branchFilter");
+    const status = document.getElementById("statusFilter");
+    if (!search || !branch || !status) return;
+    search.value = "";
+    branch.value = "all";
+    status.value = "all";
+    document.querySelectorAll("#studentSkillOptions input:checked").forEach(function(input) {
+        input.checked = false;
+    });
+    const skillSearch = document.getElementById("studentSkillSearch");
+    if (skillSearch) skillSearch.value = "";
+    document.querySelectorAll("[data-skill-option]").forEach(function(option) {
+        option.hidden = false;
+    });
+    filterStudents();
+}
+
+function updateStudentSkillLabel() {
+    const selected = Array.from(
+        document.querySelectorAll("#studentSkillOptions input:checked")
+    );
+    const label = document.getElementById("studentSkillLabel");
+    const summary = document.getElementById("studentSkillSelected");
+    if (!label || !summary) return;
+
+    label.textContent = selected.length === 0
+        ? "All skills"
+        : selected.length === 1
+            ? selected[0].parentElement.querySelector("span").textContent.trim()
+            : selected.length + " skills selected";
+    summary.textContent = selected.length
+        ? selected.length + " selected"
+        : "No skills selected";
+}
+
+function initializeStudentFilters() {
+    const branch = document.getElementById("branchFilter");
+    const status = document.getElementById("statusFilter");
+    const search = document.getElementById("studentSearch");
+    const trigger = document.getElementById("studentSkillTrigger");
+    const menu = document.getElementById("studentSkillMenu");
+    const skillSearch = document.getElementById("studentSkillSearch");
+    if (!branch || !status || !search || !trigger || !menu || !skillSearch) return;
+
+    [branch, status].forEach(function(control) {
+        control.addEventListener("change", filterStudents);
+    });
+    search.addEventListener("input", filterStudents);
+    document.querySelectorAll("#studentSkillOptions input").forEach(function(input) {
+        input.addEventListener("change", filterStudents);
+    });
+
+    trigger.addEventListener("click", function() {
+        const opening = menu.hidden;
+        menu.hidden = !opening;
+        trigger.setAttribute("aria-expanded", String(opening));
+        if (opening) skillSearch.focus();
+    });
+
+    skillSearch.addEventListener("input", function() {
+        const query = skillSearch.value.trim().toLowerCase();
+        document.querySelectorAll("[data-skill-option]").forEach(function(option) {
+            option.hidden = !option.dataset.skillOption.includes(query);
+        });
+    });
+
+    document.getElementById("clearStudentSkills").addEventListener("click", function() {
+        document.querySelectorAll("#studentSkillOptions input:checked").forEach(function(input) {
+            input.checked = false;
+        });
+        filterStudents();
+    });
+
+    document.getElementById("clearStudentFilters").addEventListener("click", clearStudentFilters);
+    const clearEmptyFilters = document.getElementById("clearEmptyStudentFilters");
+    if (clearEmptyFilters) {
+        clearEmptyFilters.addEventListener("click", clearStudentFilters);
+    }
+
+    document.addEventListener("click", function(event) {
+        if (!document.getElementById("studentSkillFilter").contains(event.target)) {
+            menu.hidden = true;
+            trigger.setAttribute("aria-expanded", "false");
+        }
+    });
+
+    document.addEventListener("keydown", function(event) {
+        if (event.key === "Escape" && !menu.hidden) {
+            menu.hidden = true;
+            trigger.setAttribute("aria-expanded", "false");
+            trigger.focus();
+        }
+    });
+}
+
+
+function setStudentSearch(value) {
+
+    const searchInput = document.getElementById("studentSearch");
+
+    if (!searchInput) {
+        return;
+    }
+
+    searchInput.value = value || "";
+    filterStudents();
+
+}
+
+
+function confirmDelete(name) {
+
+    return confirm(
+        "Are you sure you want to delete " +
+        name +
+        "?\n\nThis action cannot be undone."
+    );
+
+}
+
+initializeStudentFilters();
+filterStudents();
+
+
+function exportStudents() {
+
+    const rows =
+        document.querySelectorAll(
+            "#studentsTable tbody .student-row"
+        );
+
+    if (rows.length === 0) {
+
+        alert("No students available to export.");
+
+        return;
+
+    }
+
+
+    let csv =
+        "Student,Registration No.,Branch,CGPA,Backlogs,Attendance,Status,Skills\n";
+
+
+    rows.forEach(function(row) {
+
+        if (row.hidden) return;
+
+        const cells = row.querySelectorAll("td");
+
+
+        const name =
+            row.dataset.name || "";
+
+        const registration =
+            row.dataset.registration || "";
+
+        const branch =
+            row.dataset.branch || "";
+
+        const cgpa =
+            cells[3]?.innerText.trim() || "";
+
+        const backlogs =
+            cells[4]?.innerText.trim() || "";
+
+        const attendance =
+            cells[5]?.innerText.trim() || "";
+
+        const status =
+            row.dataset.status || "";
+        const skills = row.dataset.skills || "";
+
+
+        csv +=
+            '"' + name.replace(/"/g, '""') + '",' +
+            '"' + registration.replace(/"/g, '""') + '",' +
+            '"' + branch.replace(/"/g, '""') + '",' +
+            '"' + cgpa.replace(/"/g, '""') + '",' +
+            '"' + backlogs.replace(/"/g, '""') + '",' +
+            '"' + attendance.replace(/"/g, '""') + '",' +
+            '"' + status.replace(/"/g, '""') + '",' +
+            '"' + skills.replace(/"/g, '""') + '"\n';
+
+    });
+
+
+    const blob =
+        new Blob(
+            [csv],
+            { type:"text/csv;charset=utf-8;" }
+        );
+
+
+    const url =
+        URL.createObjectURL(blob);
+
+
+    const link =
+        document.createElement("a");
+
+    link.href = url;
+
+    link.download =
+        "CAMPUSLINK_Students.csv";
+
+    document.body.appendChild(link);
+
+    link.click();
+
+    document.body.removeChild(link);
+
+    URL.revokeObjectURL(url);
+
+}
+
+</script>
+
+{% endblock %}

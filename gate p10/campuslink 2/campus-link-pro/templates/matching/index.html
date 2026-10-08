@@ -1,0 +1,228 @@
+{% extends "base.html" %}
+
+{% block title %}AI Matching | CAMPUSLINK{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/matching.css') }}">
+{% endblock %}
+
+{% block content %}
+<div class="matching-page">
+    <section class="matching-hero">
+        <div class="matching-hero-copy">
+            <div class="eyebrow"><i class="fa-solid fa-sparkles"></i> Explainable placement matching</div>
+            <h1>Find the right candidates, faster.</h1>
+            <p>Compare real student records against a selected drive’s skills, academics, branch, attendance, and backlog requirements.</p>
+            <div class="hero-meta">
+                <span><i class="fa-solid fa-circle-check"></i> Transparent, rule-based scoring</span>
+                <span><i class="fa-solid fa-database"></i> Live CAMPUSLINK records</span>
+            </div>
+        </div>
+        <div class="matching-hero-visual" aria-hidden="true">
+            <div class="orbit orbit-one"></div>
+            <div class="orbit orbit-two"></div>
+            <div class="hero-visual-card">
+                <span class="visual-icon"><i class="fa-solid fa-wand-magic-sparkles"></i></span>
+                <strong>Smart match</strong>
+                <span>Skills + eligibility</span>
+            </div>
+        </div>
+    </section>
+
+    <section class="matching-toolbar">
+        <div>
+            <span class="section-kicker">MATCHING WORKSPACE</span>
+            <h2>Generate candidate matches</h2>
+            <p>Choose a drive to calculate ranked matches from current student records.</p>
+        </div>
+        <div class="toolbar-actions">
+            <a class="btn btn-secondary" href="{{ url_for('matching', job_id=selected_job['id']) if selected_job else url_for('matching') }}">
+                <i class="fa-solid fa-rotate"></i><span>Refresh</span>
+            </a>
+            <button class="btn btn-primary" id="run-matching" type="submit" form="matching-form">
+                <i class="fa-solid fa-wand-magic-sparkles"></i><span>Run matching</span>
+            </button>
+        </div>
+    </section>
+
+    <form class="matching-controls content-card" id="matching-form" method="GET" action="{{ url_for('matching') }}">
+        <div class="control-field">
+            <label for="job">Job drive</label>
+            <div class="select-wrap">
+                <i class="fa-solid fa-briefcase"></i>
+                <select id="job" name="job_id" required>
+                    <option value="">Choose a drive with open applications</option>
+                    {% for job in jobs %}
+                    <option value="{{ job['id'] }}" {% if selected_job and selected_job['id'] == job['id'] %}selected{% endif %}>
+                        {{ job['company_name'] }} — {{ job['role'] }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+        </div>
+        <div class="control-field">
+            <label for="minimum-score">Minimum match score</label>
+            <div class="select-wrap">
+                <i class="fa-solid fa-sliders"></i>
+                <select id="minimum-score">
+                    <option value="50">50% and above</option>
+                    <option value="60">60% and above</option>
+                    <option value="70" selected>70% and above</option>
+                    <option value="80">80% and above</option>
+                    <option value="90">90% and above</option>
+                </select>
+            </div>
+        </div>
+        <button class="btn btn-primary control-submit" id="find-candidates" type="submit">
+            <i class="fa-solid fa-magnifying-glass"></i><span>Find candidates</span>
+        </button>
+        {% if not jobs %}
+        <p class="matching-empty-drives">There are no drives with open applications. Check drive status and application deadlines in Job Drives.</p>
+        {% endif %}
+    </form>
+
+    <div class="match-status" id="match-status" role="status" aria-live="polite"></div>
+
+    <section class="stats-grid matching-stats">
+        <div class="stat-card">
+            <div class="stat-icon stat-icon-purple"><i class="fa-solid fa-users"></i></div>
+            <div><span class="stat-label">Candidates analyzed</span><strong class="stat-number">{{ candidates_analyzed }}</strong><small>{{ selected_job['company_name'] ~ ' · ' ~ selected_job['role'] if selected_job else 'Select an open drive to calculate' }}</small></div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-icon stat-icon-blue"><i class="fa-solid fa-user-check"></i></div>
+            <div><span class="stat-label">Requirements met</span><strong class="stat-number">{{ eligible_count }}</strong><small>Pass every listed requirement</small></div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-icon stat-icon-amber"><i class="fa-solid fa-star"></i></div>
+            <div><span class="stat-label">Strong matches</span><strong class="stat-number">{{ strong_match_count }}</strong><small>Meets requirements with score ≥ 80%</small></div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-icon stat-icon-green"><i class="fa-solid fa-chart-line"></i></div>
+            <div><span class="stat-label">Average score (requirements met)</span><strong class="stat-number">{{ average_score }}%</strong><small>Mean score for candidates meeting all requirements</small></div>
+        </div>
+    </section>
+
+    <section class="content-card results-card">
+        <div class="card-header results-header">
+            <div>
+                <span class="section-kicker">RANKED SHORTLIST</span>
+                <h2>Recommended candidates</h2>
+                <p>{% if selected_job %}{{ selected_job['company_name'] }} · {{ selected_job['role'] }} — candidates meeting requirements rank first, followed by match score.{% else %}Select an open job drive above to calculate real candidate matches.{% endif %}</p>
+            </div>
+            <div class="results-actions">
+                <label class="table-search">
+                    <i class="fa-solid fa-magnifying-glass"></i>
+                    <input id="candidate-search" type="search" placeholder="Search candidate or skill" aria-label="Search candidates or skills">
+                </label>
+                <button class="btn btn-secondary" id="export-results" type="button"><i class="fa-solid fa-download"></i><span>Export CSV</span></button>
+            </div>
+        </div>
+        <div class="table-container">
+            <table class="matching-table" id="matching-table">
+                <thead><tr><th>Rank</th><th>Candidate</th><th>Branch</th><th>CGPA</th><th>Skills match</th><th>Skills to build &amp; unmet requirements</th><th>Match score</th><th>Action</th></tr></thead>
+                <tbody>
+                    {% for candidate in candidates %}
+                    <tr data-score="{{ candidate['score'] }}" data-candidate="{{ (candidate['name'] ~ ' ' ~ candidate['registration_no'] ~ ' ' ~ candidate['branch'])|lower }}" data-skills="{{ (candidate['matched_skills']|join(' ') ~ ' ' ~ candidate['skill_gaps']|join(' ') ~ ' ' ~ candidate['requirement_gaps']|join(' '))|lower }}">
+                        <td><span class="rank-badge">{{ '%02d'|format(loop.index) }}</span></td>
+                        <td><div class="candidate-cell"><span class="avatar">{{ candidate['name'][:2]|upper }}</span><span><strong>{{ candidate['name'] }}</strong><small>{{ candidate['registration_no'] }}</small></span></div></td>
+                        <td><span class="branch-pill">{{ candidate['branch'] }}</span></td>
+                        <td><strong>{{ "%.2f"|format(candidate['cgpa']) }}</strong></td>
+                        <td>
+                            {% if candidate['required_skill_count'] %}
+                            <div class="skills-fit">
+                                <div class="skills-fit-heading"><strong>{{ candidate['matched_skills']|length }}/{{ candidate['required_skill_count'] }}</strong><span>required skills matched</span></div>
+                                <div class="skills-fit-track" role="progressbar" aria-label="Required skills matched" aria-valuemin="0" aria-valuemax="{{ candidate['required_skill_count'] }}" aria-valuenow="{{ candidate['matched_skills']|length }}">
+                                    <span style="width: {{ candidate['skills_score'] }}%"></span>
+                                </div>
+                                {% if candidate['matched_skills'] %}
+                                <div class="skill-chip-list">
+                                    {% for skill in candidate['matched_skills'] %}
+                                    <span class="skill-chip skill-chip-matched"><i class="fa-solid fa-check"></i>{{ skill }}</span>
+                                    {% endfor %}
+                                </div>
+                                {% else %}
+                                <small class="skill-list-empty">No required skills matched yet</small>
+                                {% endif %}
+                            </div>
+                            {% else %}
+                            <span class="skill-list-empty">No required skills specified</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if candidate['skill_recommendations'] or candidate['requirement_gaps'] %}
+                            <div class="skill-gap-cell">
+                                {% if candidate['skill_recommendations'] %}
+                                <div class="skill-gap-summary">
+                                    <span class="skill-gap-count"><i class="fa-solid fa-bullseye"></i>{{ candidate['skill_gaps']|length }} skill{% if candidate['skill_gaps']|length != 1 %}s{% endif %} to build</span>
+                                    <div class="skill-chip-list">
+                                        {% for skill in candidate['skill_gaps'] %}
+                                        <span class="skill-chip skill-chip-gap">{{ skill }}</span>
+                                        {% endfor %}
+                                    </div>
+                                </div>
+                                {% endif %}
+                                {% if candidate['requirement_gaps'] %}
+                                <div class="requirement-gaps">
+                                    <span class="requirement-gaps-heading">Other requirements to meet</span>
+                                    {% for gap in candidate['requirement_gaps'] %}
+                                    <span class="requirement-gap-item"><i class="fa-solid fa-circle-exclamation"></i>{{ gap }}</span>
+                                    {% endfor %}
+                                </div>
+                                {% endif %}
+                                {% if candidate['skill_recommendations'] %}
+                                <details class="skill-gap-details">
+                                    <summary><i class="fa-solid fa-route"></i> View personalized plan</summary>
+                                    <div class="skill-gap-plan">
+                                        <div class="skill-gap-basis"><i class="fa-solid fa-lightbulb"></i><span>Build on {{ candidate['matched_skills']|join(', ') if candidate['matched_skills'] else 'the skills already listed on this profile' }} for the <strong>{{ selected_job['role'] }}</strong> role.</span></div>
+                                        <div class="skill-gap-recommendations">
+                                            {% for recommendation in candidate['skill_recommendations'] %}
+                                            <article>
+                                                <span class="recommendation-step">NEXT SKILL</span>
+                                                <strong>{{ recommendation['skill'] }}</strong>
+                                                <p>{{ recommendation['recommendation'] }}</p>
+                                                {% if recommendation['skill']|lower in ['python', 'sql'] %}
+                                                {% set practice_category = 'Python' if recommendation['skill']|lower == 'python' else 'SQL' %}
+                                                <a href="{{ url_for('mock_tests', student_id=candidate['id'], category=practice_category) }}"><i class="fa-solid fa-arrow-up-right-from-square"></i> Practice {{ practice_category }}</a>
+                                                {% endif %}
+                                            </article>
+                                            {% endfor %}
+                                        </div>
+                                    </div>
+                                </details>
+                                {% endif %}
+                            </div>
+                            {% else %}
+                            {% if candidate['required_skill_count'] %}
+                            <span class="skill-gap-complete"><i class="fa-solid fa-circle-check"></i> All skills and requirements met</span>
+                            {% else %}
+                            <span class="skill-list-empty">No unmet skills or requirements</span>
+                            {% endif %}
+                            {% endif %}
+                        </td>
+                        <td><div class="score-cell"><strong>{{ candidate['score'] }}%</strong><span class="score-bar"><span style="width: {{ candidate['score'] }}%"></span></span></div></td>
+                        <td><a class="table-action" href="{{ url_for('view_student', student_id=candidate['id']) }}" aria-label="View {{ candidate['name'] }}"><i class="fa-solid fa-arrow-up-right-from-square"></i></a></td>
+                    </tr>
+                    {% else %}
+                    <tr class="matching-guidance-row"><td colspan="8">{% if selected_job %}No student records are available for matching.{% else %}Choose an open drive and click Find candidates to build the shortlist.{% endif %}</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            <div class="no-results" id="no-results" hidden><i class="fa-solid fa-user-slash"></i><strong>No candidates found</strong><span>Try a different name or lower the score threshold.</span></div>
+        </div>
+    </section>
+
+    <section class="content-card explainability-card">
+        <div class="card-header"><div><span class="section-kicker">EXPLAINABLE SCORING</span><h2>How your match score is calculated</h2><p>This is a deterministic rules-based score—not a generative AI prediction.</p></div><span class="model-status"><i class="fa-solid fa-circle"></i> Calculated from current records</span></div>
+        <div class="factor-grid">
+            <div class="factor-item"><span class="factor-icon factor-purple"><i class="fa-solid fa-graduation-cap"></i></span><span><strong>CGPA</strong><small>Student CGPA out of 10</small></span><b>30%</b></div>
+            <div class="factor-item"><span class="factor-icon factor-blue"><i class="fa-solid fa-code"></i></span><span><strong>Skills alignment</strong><small>Exact required skills matched</small></span><b>40%</b></div>
+            <div class="factor-item"><span class="factor-icon factor-amber"><i class="fa-solid fa-building-columns"></i></span><span><strong>Branch alignment</strong><small>Eligible branch (or all branches)</small></span><b>20%</b></div>
+            <div class="factor-item"><span class="factor-icon factor-green"><i class="fa-solid fa-list-check"></i></span><span><strong>Backlogs + attendance</strong><small>Drive limits and student records</small></span><b>10%</b></div>
+        </div>
+    </section>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{{ url_for('static', filename='js/matching.js') }}"></script>
+{% endblock %}

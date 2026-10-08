@@ -1,0 +1,173 @@
+{% extends "base.html" %}
+
+{% block title %}Resume Builder | {{ student['name'] }} | CAMPUSLINK{% endblock %}
+
+{% block content %}
+<div class="page-header resume-builder-header">
+    <div>
+        <div class="eyebrow"><i class="fa-solid fa-file-user"></i> Resume builder · {{ student['branch'] }}</div>
+        <h1>{{ student['name'] }}</h1>
+        <p>Create and maintain a professional resume using this student's real profile details.</p>
+    </div>
+    <div class="page-header-actions">
+        <a href="{{ url_for('resumes') }}" class="btn btn-secondary"><i class="fa-solid fa-arrow-left"></i> Resume workspace</a>
+        <a href="{{ url_for('view_student', student_id=student['id']) }}" class="btn btn-secondary"><i class="fa-solid fa-user"></i> Student profile</a>
+        {% if resume_ready %}<a href="{{ url_for('download_resume', student_id=student['id']) }}" class="btn btn-primary"><i class="fa-solid fa-download"></i> Download built PDF</a>{% endif %}
+        {% if uploaded_resume %}<a href="{{ url_for('download_original_resume', student_id=student['id']) }}" class="btn btn-secondary"><i class="fa-solid fa-file-arrow-down"></i> Original file</a>{% endif %}
+    </div>
+</div>
+
+{% with messages = get_flashed_messages(with_categories=true) %}
+{% if messages %}
+<div class="certificate-alert-list" aria-live="polite">
+    {% for category, message in messages %}
+    <div class="certificate-alert certificate-alert-{{ category }}"><i class="fa-solid {{ 'fa-circle-check' if category == 'success' else 'fa-circle-exclamation' }}"></i><span>{{ message }}</span></div>
+    {% endfor %}
+</div>
+{% endif %}
+{% endwith %}
+
+<div class="resume-builder-layout">
+    <div class="resume-builder-main">
+    <form class="content-card resume-form" method="POST" action="{{ url_for('edit_resume', student_id=student['id']) }}">
+        <div class="card-header">
+            <div><h2>Build your resume</h2><p>Use specific, truthful details. One item per line works best for projects and experience.</p></div>
+            <span class="resume-status resume-status-{{ 'ready' if resume_ready else 'needs' }}"><i class="fa-solid {{ 'fa-circle-check' if resume_ready else 'fa-pen-to-square' }}"></i>{{ resume['status'] }}</span>
+        </div>
+
+        <section class="resume-form-section">
+            <h3><span>01</span> Profile</h3>
+            <div class="resume-contact-strip">
+                <div><span>Name</span><strong>{{ student['name'] }}</strong></div>
+                <div><span>Branch</span><strong>{{ student['branch'] }}</strong></div>
+                <div><span>CGPA</span><strong>{{ "%.2f"|format(student['cgpa']) }} / 10</strong></div>
+                <div><span>Email / phone</span><strong>{{ student['email'] or "Add email in student profile" }}{% if student['phone'] %} · {{ student['phone'] }}{% endif %}</strong></div>
+            </div>
+            <p class="resume-form-hint">Name, branch, CGPA, and contact details are taken from the student profile.</p>
+        </section>
+
+        <section class="resume-form-section">
+            <h3><span>02</span> Professional summary <em>Required</em></h3>
+            <div class="form-group">
+                <label for="professional_summary">A concise introduction</label>
+                <textarea id="professional_summary" name="professional_summary" rows="4" maxlength="2500" placeholder="Describe your focus, strengths, and the kind of role you are seeking.">{{ resume['professional_summary'] }}</textarea>
+            </div>
+        </section>
+
+        <section class="resume-form-section">
+            <h3><span>03</span> Education <em>Required</em></h3>
+            <div class="form-group">
+                <label for="education">Degree, institution, dates, and relevant details</label>
+                <textarea id="education" name="education" rows="4" maxlength="4000" placeholder="Add your degree, institution, graduation year, and relevant coursework or achievements.">{{ resume['education'] }}</textarea>
+            </div>
+        </section>
+
+        <section class="resume-form-section">
+            <h3><span>04</span> Skills <em>Required</em></h3>
+            <div class="form-group">
+                <label for="skills">Technical and professional skills</label>
+                <textarea id="skills" name="skills" rows="3" maxlength="2000" placeholder="Python, SQL, communication, ...">{{ resume['skills'] }}</textarea>
+                <small class="form-help">Pre-filled from the student profile. Update this section if needed.</small>
+            </div>
+        </section>
+
+        <section class="resume-form-section">
+            <h3><span>05</span> Projects</h3>
+            <div class="form-group">
+                <label for="projects">Project title and your contribution (one project per line)</label>
+                <textarea id="projects" name="projects" rows="5" maxlength="7000" placeholder="Project name — what you built, tools used, and measurable outcome.">{{ resume['projects'] }}</textarea>
+            </div>
+        </section>
+
+        <section class="resume-form-section">
+            <h3><span>06</span> Experience</h3>
+            <div class="form-group">
+                <label for="experience">Internships, work, volunteering, or leadership (one item per line)</label>
+                <textarea id="experience" name="experience" rows="5" maxlength="7000" placeholder="Role · Organization · Dates — responsibilities and impact.">{{ resume['experience'] }}</textarea>
+            </div>
+        </section>
+
+        <section class="resume-form-section">
+            <h3><span>07</span> Certifications and links</h3>
+            <div class="form-group">
+                <label for="certifications">Certifications (one per line)</label>
+                <textarea id="certifications" name="certifications" rows="3" maxlength="4000" placeholder="Certification name · Issuer · Year">{{ resume['certifications'] }}</textarea>
+            </div>
+            <div class="form-grid">
+                <div class="form-group"><label for="linkedin_url">LinkedIn URL</label><input id="linkedin_url" name="linkedin_url" type="url" maxlength="500" value="{{ resume['linkedin_url'] }}" placeholder="https://linkedin.com/in/your-name"></div>
+                <div class="form-group"><label for="portfolio_url">Portfolio / GitHub URL</label><input id="portfolio_url" name="portfolio_url" type="url" maxlength="500" value="{{ resume['portfolio_url'] }}" placeholder="https://github.com/your-name"></div>
+            </div>
+        </section>
+
+        <div class="resume-form-actions">
+            <a href="{{ url_for('resumes') }}" class="btn btn-secondary">Cancel</a>
+            <button type="submit" class="btn btn-primary"><i class="fa-solid fa-floppy-disk"></i> Save and update status</button>
+            {% if resume_ready %}<a href="{{ url_for('download_resume', student_id=student['id']) }}" class="btn btn-secondary"><i class="fa-solid fa-file-pdf"></i> Download PDF</a>{% endif %}
+        </div>
+    </form>
+    <section class="content-card resume-upload-card" aria-labelledby="resumeUploadTitle">
+        <div class="resume-upload-heading">
+            <span class="resume-upload-icon"><i class="fa-solid fa-cloud-arrow-up"></i></span>
+            <div>
+                <h2 id="resumeUploadTitle">Upload an existing resume</h2>
+                <p>Already have a resume? Keep the original PDF or DOCX on your student record.</p>
+            </div>
+        </div>
+        {% if uploaded_resume %}
+        <div class="resume-uploaded-file">
+            <span class="resume-upload-file-icon"><i class="fa-solid {{ 'fa-file-pdf' if uploaded_resume['mime_type'] == 'application/pdf' else 'fa-file-word' }}"></i></span>
+            <span class="resume-uploaded-copy">
+                <strong title="{{ uploaded_resume['original_filename'] }}">{{ uploaded_resume['original_filename'] }}</strong>
+                <small>{{ (uploaded_resume['file_size'] / 1024)|round|int }} KB · Uploaded {{ uploaded_resume['uploaded_at'][:10] if uploaded_resume['uploaded_at'] else "recently" }}</small>
+            </span>
+            <a class="btn btn-secondary btn-sm" href="{{ url_for('download_original_resume', student_id=student['id']) }}"><i class="fa-solid fa-download"></i> Download</a>
+        </div>
+        {% else %}
+        <p class="resume-upload-empty"><i class="fa-regular fa-file-lines"></i> No original resume uploaded yet.</p>
+        {% endif %}
+        <form class="resume-upload-form" method="POST" action="{{ url_for('upload_resume', student_id=student['id']) }}" enctype="multipart/form-data">
+            <label class="resume-file-picker" for="resume_file">
+                <i class="fa-solid fa-cloud-arrow-up"></i>
+                <span><strong>{{ 'Replace uploaded file' if uploaded_resume else 'Choose a resume file' }}</strong><small>PDF or DOCX · up to {{ (max_resume_size / 1024 / 1024)|int }} MB</small></span>
+                <input id="resume_file" name="resume_file" type="file" accept=".pdf,.docx,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document" required>
+            </label>
+            <div class="resume-upload-submit">
+                <span id="resumeFileName" aria-live="polite">No file selected</span>
+                <button class="btn btn-primary" type="submit"><i class="fa-solid fa-upload"></i> Upload resume</button>
+            </div>
+        </form>
+    </section>
+    </div>
+
+    <aside class="resume-builder-aside">
+        <div class="content-card resume-readiness-card">
+            <span class="resume-readiness-icon {{ 'is-ready' if resume_ready else '' }}"><i class="fa-solid {{ 'fa-circle-check' if resume_ready else 'fa-wand-magic-sparkles' }}"></i></span>
+            <span class="resume-status resume-status-{{ 'ready' if resume_ready else 'needs' }}">{{ resume['status'] }}</span>
+            <h2>{{ "Resume ready" if resume_ready else "Resume needs generation" }}</h2>
+            <p>{{ "Your formatted resume PDF is ready to download." if resume_ready else ("An original resume is on file. Complete the builder sections too if you want a CAMPUSLINK-formatted PDF." if uploaded_resume else "Complete the required sections and save to prepare a downloadable resume.") }}</p>
+            <ul>
+                <li class="{{ 'is-complete' if resume['professional_summary'].strip() else '' }}"><i class="fa-solid {{ 'fa-circle-check' if resume['professional_summary'].strip() else 'fa-circle' }}"></i> Professional summary</li>
+                <li class="{{ 'is-complete' if resume['education'].strip() else '' }}"><i class="fa-solid {{ 'fa-circle-check' if resume['education'].strip() else 'fa-circle' }}"></i> Education</li>
+                <li class="{{ 'is-complete' if resume['skills'].strip() else '' }}"><i class="fa-solid {{ 'fa-circle-check' if resume['skills'].strip() else 'fa-circle' }}"></i> Skills</li>
+            </ul>
+            {% if resume_ready %}<a href="{{ url_for('download_resume', student_id=student['id']) }}" class="btn btn-primary resume-download-wide"><i class="fa-solid fa-download"></i> Download built PDF</a>{% endif %}
+            {% if uploaded_resume %}<a href="{{ url_for('download_original_resume', student_id=student['id']) }}" class="btn btn-secondary resume-download-wide"><i class="fa-solid fa-file-arrow-down"></i> Download original file</a>{% endif %}
+            {% if resume['updated_at'] %}<small class="resume-updated">Last saved {{ resume['updated_at'] }}</small>{% endif %}
+        </div>
+        <div class="resume-tip-card"><i class="fa-solid fa-lightbulb"></i><div><strong>Make it effective</strong><p>Use action verbs, quantify results where possible, and tailor the summary and skills to each role. Only include accurate information.</p></div></div>
+    </aside>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+(() => {
+    const input = document.querySelector("#resume_file");
+    const filename = document.querySelector("#resumeFileName");
+    if (!input || !filename) return;
+    input.addEventListener("change", () => {
+        filename.textContent = input.files.length ? input.files[0].name : "No file selected";
+    });
+})();
+</script>
+{% endblock %}

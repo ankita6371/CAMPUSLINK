@@ -1,0 +1,407 @@
+{% extends "base.html" %}
+
+{% block title %}Reports | CAMPUSLINK{% endblock %}
+
+{% block content %}
+
+
+<div class="page-header">
+
+    <div>
+        <h1>Reports</h1>
+        <p>Generate, view, and export placement management reports.</p>
+    </div>
+
+    <div class="page-header-actions">
+
+        <a class="btn btn-secondary" href="{{ url_for('generate_report', report_type='students', file_format='csv') }}">
+            <i class="fa-solid fa-file-export"></i>
+            Export Data
+        </a>
+
+        <a class="btn btn-primary" href="{{ url_for('generate_report', report_type='placement', file_format='pdf') }}">
+            <i class="fa-solid fa-plus"></i>
+            Generate Report
+        </a>
+
+    </div>
+
+</div>
+
+
+
+<div class="stats-grid">
+
+    <div class="stat-card">
+
+        <div class="stat-icon">
+            <i class="fa-solid fa-file-lines"></i>
+        </div>
+
+        <div>
+            <span class="stat-label">Total Reports</span>
+            <h3>6</h3>
+        </div>
+
+    </div>
+
+
+    <div class="stat-card">
+
+        <div class="stat-icon">
+            <i class="fa-solid fa-user-graduate"></i>
+        </div>
+
+        <div>
+            <span class="stat-label">Student Records</span>
+            <h3>{{ report_stats["students"] }}</h3>
+        </div>
+
+    </div>
+
+
+    <div class="stat-card">
+
+        <div class="stat-icon">
+            <i class="fa-solid fa-building"></i>
+        </div>
+
+        <div>
+            <span class="stat-label">Company Records</span>
+            <h3>{{ report_stats["companies"] }}</h3>
+        </div>
+
+    </div>
+
+
+    <div class="stat-card">
+
+        <div class="stat-icon">
+            <i class="fa-solid fa-chart-pie"></i>
+        </div>
+
+        <div>
+            <span class="stat-label">Placement Reports</span>
+            <h3>{{ placement_rate }}%</h3>
+        </div>
+
+    </div>
+
+</div>
+
+
+
+<div class="content-card">
+
+    <div class="card-header">
+
+        <div>
+            <h2>Generate Reports</h2>
+            <p>Select a report type to generate placement insights.</p>
+        </div>
+
+    </div>
+
+
+    <div class="report-grid">
+
+
+        
+        <div class="report-card">
+
+            <div class="report-icon">
+                <i class="fa-solid fa-user-graduate"></i>
+            </div>
+
+            <div class="report-content">
+
+                <h3>Student Report</h3>
+
+                <p>
+                    Complete student information including
+                    CGPA, branch, attendance, backlogs,
+                    skills, and placement status.
+                </p>
+
+                <a class="btn btn-secondary" href="{{ url_for('generate_report', report_type='students', file_format='csv') }}">
+                    <i class="fa-solid fa-file-arrow-down"></i>
+                    Generate
+                </a>
+
+            </div>
+
+        </div>
+
+
+        
+        <div class="report-card">
+
+            <div class="report-icon">
+                <i class="fa-solid fa-building"></i>
+            </div>
+
+            <div class="report-content">
+
+                <h3>Company Report</h3>
+
+                <p>
+                    View registered companies, industries,
+                    locations, job drives, and recruitment
+                    activity.
+                </p>
+
+                <a class="btn btn-secondary" href="{{ url_for('generate_report', report_type='companies', file_format='csv') }}">
+                    <i class="fa-solid fa-file-arrow-down"></i>
+                    Generate
+                </a>
+
+            </div>
+
+        </div>
+
+
+        
+        <div class="report-card">
+
+            <div class="report-icon">
+                <i class="fa-solid fa-chart-column"></i>
+            </div>
+
+            <div class="report-content">
+
+                <h3>Placement Report</h3>
+
+                <p>
+                    Analyze total placements, placement rate,
+                    branch-wise performance, and student
+                    outcomes.
+                </p>
+
+                <a class="btn btn-secondary" href="{{ url_for('generate_report', report_type='placement', file_format='csv') }}">
+                    <i class="fa-solid fa-file-arrow-down"></i>
+                    Generate
+                </a>
+
+            </div>
+
+        </div>
+
+
+        
+        <div class="report-card">
+
+            <div class="report-icon">
+                <i class="fa-solid fa-handshake"></i>
+            </div>
+
+            <div class="report-content">
+
+                <h3>Offer Report</h3>
+
+                <p>
+                    View student offers, companies,
+                    job roles, salary packages,
+                    and joining dates.
+                </p>
+
+                <a class="btn btn-secondary" href="{{ url_for('generate_report', report_type='offers', file_format='csv') }}">
+                    <i class="fa-solid fa-file-arrow-down"></i>
+                    Generate
+                </a>
+
+            </div>
+
+        </div>
+
+
+        
+        <div class="report-card">
+
+            <div class="report-icon">
+                <i class="fa-solid fa-file-circle-check"></i>
+            </div>
+
+            <div class="report-content">
+
+                <h3>Application Report</h3>
+
+                <p>
+                    Analyze applications, shortlists,
+                    interviews, selections, and
+                    rejected candidates.
+                </p>
+
+                <a class="btn btn-secondary" href="{{ url_for('generate_report', report_type='applications', file_format='csv') }}">
+                    <i class="fa-solid fa-file-arrow-down"></i>
+                    Generate
+                </a>
+
+            </div>
+
+        </div>
+
+
+        
+        <div class="report-card">
+
+            <div class="report-icon">
+                <i class="fa-solid fa-calendar-check"></i>
+            </div>
+
+            <div class="report-content">
+
+                <h3>Interview Report</h3>
+
+                <p>
+                    Track scheduled interviews,
+                    completed rounds, pending interviews,
+                    and interview outcomes.
+                </p>
+
+                <a class="btn btn-secondary" href="{{ url_for('generate_report', report_type='interviews', file_format='csv') }}">
+                    <i class="fa-solid fa-file-arrow-down"></i>
+                    Generate
+                </a>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+
+
+<div class="content-card">
+
+    <div class="card-header">
+
+        <div>
+            <h2>Recent Reports</h2>
+            <p>Previously generated placement reports.</p>
+        </div>
+
+    </div>
+
+
+    <div class="table-container">
+
+        <table class="data-table reports-table">
+
+            <thead>
+
+                <tr>
+                    <th>#</th>
+                    <th>Report Name</th>
+                    <th>Report Type</th>
+                    <th>Generated By</th>
+                    <th>Date</th>
+                    <th>Format</th>
+                    <th>Actions</th>
+                </tr>
+
+            </thead>
+
+
+            <tbody>
+
+
+                {% set recent_reports = [
+                    ("Placement Summary", "Placement", "placement", "Today"),
+                    ("Student Master Data", "Students", "students", "Today"),
+                    ("Company Recruitment Report", "Companies", "companies", "Today"),
+                    ("Offer & Salary Analysis", "Offers", "offers", "Today"),
+                    ("Application Pipeline Report", "Applications", "applications", "Today"),
+                    ("Interview Schedule Report", "Interviews", "interviews", "Today")
+                ] %}
+                {% for name, report_type, report_key, report_date in recent_reports %}
+                <tr class="report-row">
+                    <td><span class="report-index">{{ "%02d"|format(loop.index) }}</span></td>
+                    <td><div class="report-name-cell"><span class="report-table-icon"><i class="fa-solid fa-file-lines"></i></span><strong>{{ name }}</strong></div></td>
+                    <td><span class="report-type">{{ report_type }}</span></td>
+                    <td><span class="report-owner"><i class="fa-solid fa-user-shield"></i> Admin</span></td>
+                    <td><span class="report-date-cell"><i class="fa-regular fa-calendar"></i> {{ report_date }}</span></td>
+                    <td><div class="report-format-group"><a class="report-format-link report-format-csv" href="{{ url_for('generate_report', report_type=report_key, file_format='csv') }}">CSV</a><a class="report-format-link report-format-excel" href="{{ url_for('generate_report', report_type=report_key, file_format='xls') }}">Excel</a><a class="report-format-link report-format-pdf" href="{{ url_for('generate_report', report_type=report_key, file_format='pdf') }}">PDF</a></div></td>
+                    <td><div class="action-buttons"><a class="action-btn" href="{{ url_for('generate_report', report_type=report_key, file_format='pdf') }}" title="Download PDF"><i class="fa-solid fa-eye"></i></a><a class="action-btn" href="{{ url_for('generate_report', report_type=report_key, file_format='csv') }}" title="Download CSV"><i class="fa-solid fa-download"></i></a></div></td>
+                </tr>
+                {% endfor %}
+
+
+            </tbody>
+
+        </table>
+
+    </div>
+
+</div>
+
+
+
+<div class="content-card">
+
+    <div class="card-header">
+
+        <div>
+            <h2>Available Export Formats</h2>
+            <p>CAMPUSLINK will support multiple report formats.</p>
+        </div>
+
+    </div>
+
+
+    <div class="report-format-list">
+
+        <div class="format-item">
+
+            <div class="format-icon">
+                <i class="fa-solid fa-file-csv"></i>
+            </div>
+
+            <div>
+                <a class="report-format-title" href="{{ url_for('generate_report', report_type='placement', file_format='csv') }}"><strong>CSV</strong></a>
+                <span>
+                    Suitable for spreadsheets and data analysis.
+                </span>
+            </div>
+
+        </div>
+
+
+        <div class="format-item">
+
+            <div class="format-icon">
+                <i class="fa-solid fa-file-pdf"></i>
+            </div>
+
+            <div>
+                <a class="report-format-title" href="{{ url_for('generate_report', report_type='placement', file_format='pdf') }}"><strong>PDF</strong></a>
+                <span>
+                    Suitable for official placement reports.
+                </span>
+            </div>
+
+        </div>
+
+
+        <div class="format-item">
+
+            <div class="format-icon">
+                <i class="fa-solid fa-file-excel"></i>
+            </div>
+
+            <div>
+                <a class="report-format-title" href="{{ url_for('generate_report', report_type='placement', file_format='xls') }}"><strong>Excel</strong></a>
+                <span>
+                    Suitable for detailed data analysis.
+                </span>
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+
+{% endblock %}

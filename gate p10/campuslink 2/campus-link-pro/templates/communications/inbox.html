@@ -1,0 +1,74 @@
+{% extends "base.html" %}
+
+{% block title %}{{ student['name'] }} Inbox | CAMPUSLINK{% endblock %}
+
+{% block content %}
+<div class="page-header communication-page-header">
+    <div>
+        <div class="eyebrow"><i class="fa-solid fa-inbox"></i> Student notifications</div>
+        <h1>{{ student['name'] }}’s inbox</h1>
+        <p>{{ student['registration_no'] }} · {{ student['branch'] }} · {{ unread_count }} unread message{% if unread_count != 1 %}s{% endif %}</p>
+    </div>
+    <div class="page-header-actions">
+        <a class="btn btn-secondary" href="{{ url_for('view_student', student_id=student['id']) }}"><i class="fa-solid fa-user"></i> Student profile</a>
+        {% if unread_count %}
+        <form method="POST" action="{{ url_for('mark_all_communications_read', student_id=student['id']) }}">
+            <button class="btn btn-primary" type="submit"><i class="fa-solid fa-check-double"></i> Mark all read</button>
+        </form>
+        {% endif %}
+    </div>
+</div>
+
+{% with messages = get_flashed_messages(with_categories=true) %}
+{% if messages %}
+<div class="certificate-alert-list" aria-live="polite">
+    {% for category, message in messages %}
+    <div class="certificate-alert certificate-alert-{{ category }}">
+        <i class="fa-solid {{ 'fa-circle-check' if category == 'success' else 'fa-circle-exclamation' }}"></i><span>{{ message }}</span>
+    </div>
+    {% endfor %}
+</div>
+{% endif %}
+{% endwith %}
+
+<section class="content-card student-inbox-card">
+    <div class="card-header"><div><span class="section-kicker">CAMPUSLINK INBOX</span><h2>Messages for {{ student['name'] }}</h2><p>Read placement updates and reply privately if you have a question.</p></div></div>
+    <div class="student-inbox-list">
+        {% for message in messages %}
+        <article class="student-inbox-message {% if not message['read_at'] %}is-unread{% endif %}">
+            <span class="inbox-message-icon"><i class="fa-solid {{ 'fa-calendar-check' if message['category'] == 'Interview' else 'fa-hourglass-end' if message['category'] == 'Deadline' else 'fa-briefcase' if message['category'] == 'Opportunity' else 'fa-bullhorn' }}"></i></span>
+            <div class="inbox-message-copy">
+                <div class="inbox-message-heading">
+                    <div><span class="communication-category communication-category-{{ message['category']|lower }}">{{ message['category'] }}</span><h3>{{ message['title'] }}</h3></div>
+                    {% if message['new_officer_reply'] %}<span class="inbox-unread-indicator"><i class="fa-solid fa-circle"></i> New officer response</span>{% elif not message['read_at'] %}<span class="inbox-unread-indicator"><i class="fa-solid fa-circle"></i> Unread</span>{% else %}<span class="inbox-read-label"><i class="fa-solid fa-check"></i> Read</span>{% endif %}
+                </div>
+                <p>{{ message['body'] }}</p>
+                <div class="inbox-message-footer">
+                    <span><i class="fa-regular fa-clock"></i> {{ message['created_at'][:16] if message['created_at'] else "—" }}</span>
+                    {% if not message['read_at'] %}
+                    <form method="POST" action="{{ url_for('mark_communication_read', communication_id=message['id'], student_id=student['id']) }}">
+                        <button type="submit" class="inbox-mark-read"><i class="fa-solid fa-check"></i> Mark as read</button>
+                    </form>
+                    {% endif %}
+                </div>
+                <div class="inbox-conversation">
+                    {% for reply in message['replies'] %}
+                    <div class="inbox-conversation-reply {% if reply['sender_type'] == 'student' %}from-student{% else %}from-officer{% endif %}">
+                        <div class="inbox-reply-heading"><strong>{{ 'You' if reply['sender_type'] == 'student' else 'Placement officer' }}</strong><time>{{ reply['created_at'][:16] if reply['created_at'] else "—" }}</time></div>
+                        <p>{{ reply['body'] }}</p>
+                    </div>
+                    {% endfor %}
+                    <form class="inbox-reply-form" method="POST" action="{{ url_for('reply_to_communication', communication_id=message['id'], student_id=student['id']) }}">
+                        <label class="sr-only" for="student-reply-{{ message['id'] }}">Ask a question about {{ message['title'] }}</label>
+                        <textarea id="student-reply-{{ message['id'] }}" name="body" rows="2" maxlength="4000" required placeholder="Have a question about this update? Write to the placement officer…"></textarea>
+                        <button class="btn btn-secondary btn-sm" type="submit"><i class="fa-solid fa-reply"></i> Send question</button>
+                    </form>
+                </div>
+            </div>
+        </article>
+        {% else %}
+        <div class="empty-state"><i class="fa-regular fa-bell-slash"></i><strong>No notifications yet</strong><span>Messages sent to this student will appear here.</span></div>
+        {% endfor %}
+    </div>
+</section>
+{% endblock %}

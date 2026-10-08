@@ -1,0 +1,126 @@
+{% extends "base.html" %}
+
+{% block title %}Resume Workspace | CAMPUSLINK{% endblock %}
+
+{% block content %}
+<div class="page-header resume-page-header">
+    <div>
+        <div class="eyebrow"><i class="fa-solid fa-file-user"></i> Career documents</div>
+        <h1>Resume workspace</h1>
+        <p>Build professional, downloadable resumes and track progress by student and branch.</p>
+    </div>
+</div>
+
+<div class="stats-grid resume-stats">
+    <div class="stat-card">
+        <span class="stat-icon stat-icon-primary"><i class="fa-solid fa-users"></i></span>
+        <span><span class="stat-label">Student resumes</span><strong class="stat-value">{{ students|length }}</strong></span>
+    </div>
+    <div class="stat-card">
+        <span class="stat-icon stat-icon-success"><i class="fa-solid fa-circle-check"></i></span>
+        <span><span class="stat-label">Resume ready</span><strong class="stat-value">{{ ready_count }}</strong></span>
+    </div>
+    <div class="stat-card">
+        <span class="stat-icon stat-icon-info"><i class="fa-solid fa-cloud-arrow-up"></i></span>
+        <span><span class="stat-label">Original files on file</span><strong class="stat-value">{{ uploaded_count }}</strong></span>
+    </div>
+    <div class="stat-card">
+        <span class="stat-icon stat-icon-warning"><i class="fa-solid fa-file-circle-exclamation"></i></span>
+        <span><span class="stat-label">Needs generation</span><strong class="stat-value">{{ needs_generation_count }}</strong></span>
+    </div>
+</div>
+
+<div class="content-card resume-directory-card">
+    <div class="card-header">
+        <div><h2>Student resume status</h2><p>Branch-specific resume preparation and downloads.</p></div>
+        <span class="view-label"><span class="live-dot"></span> Live status</span>
+    </div>
+    <div class="resume-toolbar">
+        <label class="search-box">
+            <i class="fa-solid fa-magnifying-glass"></i>
+            <input id="resumeSearch" type="search" placeholder="Search student or registration..." autocomplete="off">
+        </label>
+        <select id="resumeBranchFilter" aria-label="Filter resumes by branch">
+            <option value="">All branches</option>
+            {% for branch in branches %}<option value="{{ branch|lower }}">{{ branch }}</option>{% endfor %}
+        </select>
+        <select id="resumeStatusFilter" aria-label="Filter resumes by status">
+            <option value="">All resume statuses</option>
+            <option value="Ready">Resume ready</option>
+            <option value="Uploaded">Uploaded</option>
+            <option value="Needs generation">Needs generation</option>
+        </select>
+        <button class="btn btn-quiet" type="button" id="clearResumeFilters">Clear filters</button>
+    </div>
+    <div class="resume-results-note"><span><strong id="resumeResultCount">{{ students|length }}</strong> students shown</span><span>Build a formatted PDF or keep a student's original PDF/DOCX on file.</span></div>
+    <div class="table-container">
+        <table class="data-table resume-table">
+            <thead><tr><th>Student</th><th>Registration</th><th>Branch</th><th>Status</th><th>Last updated</th><th>Resume files</th><th>Actions</th></tr></thead>
+            <tbody id="resumeRows">
+            {% for student in students %}
+            <tr data-search="{{ student['name']|lower }} {{ student['registration_no']|lower }} {{ (student['email'] or '')|lower }}" data-branch="{{ student['branch']|lower }}" data-status="{{ student['status'] }}">
+                <td><a class="student-info table-link" href="{{ url_for('view_student', student_id=student['student_id']) }}"><span class="avatar">{{ student['name'][:2]|upper }}</span><span><strong>{{ student['name'] }}</strong><small>{{ student['email'] or "Email not provided" }}</small></span></a></td>
+                <td>{{ student['registration_no'] }}</td>
+                <td><span class="resume-branch"><i class="fa-solid fa-code-branch"></i>{{ student['branch'] }}</span></td>
+                <td><span class="resume-status resume-status-{{ 'ready' if student['status'] == 'Ready' else ('uploaded' if student['status'] == 'Uploaded' else 'needs') }}"><i class="fa-solid {{ 'fa-circle-check' if student['status'] == 'Ready' else ('fa-cloud-arrow-up' if student['status'] == 'Uploaded' else 'fa-pen-to-square') }}"></i>{{ student['status'] }}</span></td>
+                <td>{{ student['updated_at'][:10] if student['updated_at'] else "Not started" }}</td>
+                <td>
+                    <div class="resume-file-list">
+                        {% if student['status'] == 'Ready' %}<a href="{{ url_for('download_resume', student_id=student['student_id']) }}"><i class="fa-solid fa-file-pdf"></i> Built PDF</a>{% endif %}
+                        {% if student['uploaded_filename'] %}<a href="{{ url_for('download_original_resume', student_id=student['student_id']) }}" title="{{ student['uploaded_filename'] }}"><i class="fa-solid fa-paperclip"></i>{{ student['uploaded_filename'] }}</a>{% endif %}
+                        {% if student['status'] != 'Ready' and not student['uploaded_filename'] %}<span class="text-muted">No files yet</span>{% endif %}
+                    </div>
+                </td>
+                <td>
+                    <div class="resume-row-actions">
+                        <a class="btn btn-secondary btn-sm" href="{{ url_for('edit_resume', student_id=student['student_id']) }}"><i class="fa-solid {{ 'fa-pen' if student['status'] == 'Ready' else 'fa-file-arrow-up' }}"></i>{{ 'Manage resume' if student['status'] != 'Needs generation' else 'Create resume' }}</a>
+                        {% if student['status'] == 'Ready' %}
+                        <a class="action-btn" href="{{ url_for('download_resume', student_id=student['student_id']) }}" title="Download {{ student['name'] }} resume"><i class="fa-solid fa-download"></i></a>
+                        {% endif %}
+                    </div>
+                </td>
+            </tr>
+            {% else %}
+            <tr><td colspan="7" class="empty-state"><i class="fa-solid fa-file-user"></i><strong>No students found</strong><span>Add student profiles to begin building resumes.</span></td></tr>
+            {% endfor %}
+            </tbody>
+        </table>
+        <div class="empty-state is-hidden" id="resumeNoResults"><i class="fa-solid fa-filter-circle-xmark"></i><strong>No matching students</strong><span>Change the search or filters to find a student.</span></div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+(() => {
+    const search = document.querySelector("#resumeSearch");
+    const branch = document.querySelector("#resumeBranchFilter");
+    const status = document.querySelector("#resumeStatusFilter");
+    const rows = [...document.querySelectorAll("#resumeRows tr[data-search]")];
+    const count = document.querySelector("#resumeResultCount");
+    const empty = document.querySelector("#resumeNoResults");
+    const filter = () => {
+        const query = search.value.trim().toLowerCase();
+        let visible = 0;
+        rows.forEach(row => {
+            const matches = (!query || row.dataset.search.includes(query))
+                && (!branch.value || row.dataset.branch === branch.value)
+                && (!status.value || row.dataset.status === status.value);
+            row.hidden = !matches;
+            if (matches) visible++;
+        });
+        count.textContent = visible;
+        empty.classList.toggle("is-hidden", visible > 0 || rows.length === 0);
+    };
+    search.addEventListener("input", filter);
+    branch.addEventListener("change", filter);
+    status.addEventListener("change", filter);
+    document.querySelector("#clearResumeFilters").addEventListener("click", () => {
+        search.value = "";
+        branch.value = "";
+        status.value = "";
+        filter();
+    });
+})();
+</script>
+{% endblock %}

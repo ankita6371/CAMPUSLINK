@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Secure setup | CAMPUSLINK</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+    <style>
+        body {
+            min-height: 100vh; margin: 0; padding: 28px; display: grid;
+            place-items: center; color: #172033; font-family: Inter, sans-serif;
+            background: radial-gradient(circle at 8% 12%, #dbeafe 0, transparent 28%),
+                        radial-gradient(circle at 90% 88%, #ede9fe 0, transparent 30%), #f8fafc;
+        }
+        .setup-shell {
+            width: min(100%, 980px); display: grid; grid-template-columns: 0.9fr 1.1fr;
+            overflow: hidden; background: #fff; border: 1px solid #e7eaf1;
+            border-radius: 26px; box-shadow: 0 28px 80px #1720331a;
+        }
+        .setup-aside {
+            padding: 48px; color: #fff;
+            background: linear-gradient(145deg, #111827, #312e81);
+            display: flex; flex-direction: column; justify-content: space-between;
+        }
+        .brand { display: flex; gap: 13px; align-items: center; }
+        .brand-mark {
+            width: 48px; height: 48px; display: grid; place-items: center; border-radius: 15px;
+            background: #ffffff20; border: 1px solid #ffffff28; font-size: 21px;
+        }
+        .brand strong { display: block; font-size: 17px; letter-spacing: .06em; }
+        .brand span { display: block; margin-top: 4px; color: #c7d2fe; font-size: 11px; }
+        .aside-copy { max-width: 340px; margin: 60px 0; }
+        .aside-copy .eyebrow { color: #a5b4fc; font-size: 11px; font-weight: 700; letter-spacing: .14em; text-transform: uppercase; }
+        .aside-copy h1 { margin: 14px 0; font-size: clamp(28px, 4vw, 40px); line-height: 1.15; }
+        .aside-copy p { color: #cbd5e1; font-size: 14px; line-height: 1.75; }
+        .secure-note { display: flex; align-items: center; gap: 10px; color: #c7d2fe; font-size: 12px; }
+        .setup-main { padding: 52px clamp(28px, 6vw, 66px); }
+        .step { display: inline-flex; align-items: center; gap: 8px; padding: 7px 11px; color: #4338ca; background: #eef2ff; border-radius: 999px; font-size: 11px; font-weight: 700; }
+        .setup-main h2 { margin: 20px 0 8px; font-size: 28px; letter-spacing: -.04em; }
+        .setup-main > p { margin: 0 0 25px; color: #64748b; font-size: 13px; line-height: 1.65; }
+        .flash { padding: 11px 13px; margin: 0 0 15px; border-radius: 10px; color: #991b1b; background: #fef2f2; border: 1px solid #fecaca; font-size: 12px; }
+        .field { margin: 15px 0; }
+        .field label { display: block; margin-bottom: 7px; font-size: 12px; font-weight: 650; color: #334155; }
+        .field input { width: 100%; height: 46px; padding: 0 13px; border: 1px solid #dbe1ea; border-radius: 10px; outline: none; color: #172033; font: inherit; font-size: 13px; }
+        .field input:focus { border-color: #6366f1; box-shadow: 0 0 0 3px #6366f11a; }
+        .password-hint { display: block; margin-top: 7px; color: #64748b; font-size: 11px; }
+        .submit {
+            width: 100%; height: 48px; margin-top: 9px; display: flex; align-items: center;
+            justify-content: center; gap: 9px; border: 0; border-radius: 11px;
+            color: white; background: linear-gradient(100deg, #4f46e5, #4338ca);
+            font: inherit; font-size: 13px; font-weight: 700; cursor: pointer;
+            box-shadow: 0 9px 20px #4f46e533;
+        }
+        .submit:hover { filter: brightness(1.06); }
+        @media (max-width: 720px) {
+            body { padding: 14px; }
+            .setup-shell { grid-template-columns: 1fr; }
+            .setup-aside { padding: 27px; }
+            .aside-copy { margin: 32px 0 20px; }
+            .secure-note { display: none; }
+            .setup-main { padding: 32px 27px; }
+        }
+    </style>
+</head>
+<body>
+    <main class="setup-shell">
+        <section class="setup-aside">
+            <div class="brand">
+                <span class="brand-mark"><i class="fa-solid fa-graduation-cap"></i></span>
+                <span><strong>CAMPUSLINK</strong><span>Placement Management</span></span>
+            </div>
+            <div class="aside-copy">
+                <span class="eyebrow">Your placement workspace</span>
+                <h1>Create a secure administrator login.</h1>
+                <p>This one-time setup creates your first administrator account. Use it to invite placement officers and connect student accounts.</p>
+            </div>
+            <div class="secure-note"><i class="fa-solid fa-shield-halved"></i> Passwords are stored as secure one-way hashes.</div>
+        </section>
+        <section class="setup-main">
+            <span class="step"><i class="fa-solid fa-1"></i> ONE-TIME SETUP</span>
+            <h2>Create your account</h2>
+            <p>Choose a username and a strong password. Setup is available only until the first administrator account is created.</p>
+            {% with messages = get_flashed_messages(with_categories=true) %}
+            {% for category, message in messages %}
+            <div class="flash" role="alert">{{ message }}</div>
+            {% endfor %}
+            {% endwith %}
+            <form method="post" action="{{ url_for('setup') }}">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <div class="field">
+                    <label for="username">Username</label>
+                    <input id="username" name="username" autocomplete="username" minlength="3" maxlength="32" pattern="[A-Za-z0-9_.-]{3,32}" required>
+                    <span class="password-hint">Use 3–32 letters, numbers, dots, dashes, or underscores.</span>
+                </div>
+                <div class="field">
+                    <label for="password">Password</label>
+                    <input id="password" name="password" type="password" autocomplete="new-password" minlength="12" required>
+                    <span class="password-hint">Use at least 12 characters.</span>
+                </div>
+                <button class="submit" type="submit">Create administrator account <i class="fa-solid fa-arrow-right"></i></button>
+            </form>
+        </section>
+    </main>
+</body>
+</html>

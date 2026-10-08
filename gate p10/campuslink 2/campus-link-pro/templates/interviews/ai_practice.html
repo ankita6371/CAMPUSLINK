@@ -1,0 +1,119 @@
+{% extends "base.html" %}
+{% block title %}AI Interview Practice | CampusLink{% endblock %}
+{% block content %}
+<main class="ai-practice-page" id="ai-practice"
+      data-context='{{ interview_context|tojson }}'>
+    <a class="practice-back-link" href="{{ url_for('interviews') }}">
+        <i class="fa-solid fa-arrow-left"></i> Back to interviews
+    </a>
+
+    <header class="practice-header">
+        <div>
+            <span class="practice-eyebrow"><i class="fa-solid fa-sparkles"></i> INTERVIEW PRACTICE</span>
+            <h1>Practice your next interview</h1>
+            <p>A private mock session tailored to your upcoming interview.</p>
+        </div>
+        <span class="practice-status-pill"><i class="fa-solid fa-circle"></i> Practice mode</span>
+    </header>
+
+    <section class="practice-context-card" aria-label="Interview details">
+        <div class="practice-avatar"><i class="fa-solid fa-user-tie"></i></div>
+        <div class="practice-person">
+            <strong>{{ interview['student_name'] }}</strong>
+            <span>{{ interview['registration_no'] }} · {{ interview['branch'] }}</span>
+        </div>
+        <div class="practice-context-divider"></div>
+        <div class="practice-meta"><span>COMPANY</span><strong>{{ interview['company_name'] }}</strong></div>
+        <div class="practice-meta"><span>ROLE</span><strong>{{ interview['role'] }}</strong></div>
+        <div class="practice-meta"><span>ROUND</span><strong>{{ interview['round'] }}</strong></div>
+        <div class="practice-meta"><span>SCHEDULED</span><strong>{{ interview['interview_date'] }} · {{ interview['interview_time'] }}</strong></div>
+    </section>
+
+    <div class="practice-disclosure" role="note">
+        <i class="fa-solid fa-shield-halved"></i>
+        <span>This is a simulated practice interviewer, not a connected generative AI service. Your camera is shown only in this browser, and no audio, video, transcript, or answers are uploaded or saved. Speech-to-text, when available, is provided by your browser and may use its own speech service. You can type answers instead.</span>
+    </div>
+
+    <section class="practice-workspace">
+        <div class="practice-main-column">
+            <div class="practice-camera-card">
+                <div class="practice-card-heading">
+                    <div><span class="practice-step-label">YOUR SETUP</span><h2>Camera & microphone</h2></div>
+                    <span class="camera-live-indicator" id="camera-indicator"><i class="fa-solid fa-circle"></i> Camera off</span>
+                </div>
+                <div class="practice-video-wrap">
+                    <video id="candidate-video" autoplay muted playsinline aria-label="Your live camera preview"></video>
+                    <div class="camera-placeholder" id="camera-placeholder">
+                        <span class="camera-placeholder-icon"><i class="fa-solid fa-video-slash"></i></span>
+                        <strong>Your camera preview will appear here</strong>
+                        <span>Camera and microphone are requested only when you start.</span>
+                    </div>
+                    <div class="camera-name-tag" id="camera-name-tag" hidden><i class="fa-solid fa-user"></i> {{ interview['student_name'] }}</div>
+                </div>
+                <div class="camera-controls">
+                    <span id="media-message" class="media-message" aria-live="polite">Allow camera and microphone access to begin.</span>
+                    <button class="practice-button practice-button-primary" id="start-practice" type="button"><i class="fa-solid fa-play"></i> Start practice</button>
+                    <button class="practice-button practice-button-secondary" id="continue-text-only" type="button" hidden>Continue without camera</button>
+                    <button class="practice-button practice-button-secondary" id="end-practice" type="button" hidden><i class="fa-solid fa-stop"></i> End session</button>
+                </div>
+            </div>
+
+            <div class="practice-question-card" id="question-card" aria-live="polite">
+                <div class="practice-question-topline">
+                    <span class="practice-step-label">YOUR INTERVIEWER</span>
+                    <span id="question-progress" class="question-progress">Ready when you are</span>
+                </div>
+                <div class="interviewer-prompt">
+                    <span class="interviewer-icon"><i class="fa-solid fa-comment-dots"></i></span>
+                    <div>
+                        <span class="interviewer-name">CampusLink Practice Interviewer</span>
+                        <p id="question-text">Start the practice session to receive your first question.</p>
+                    </div>
+                </div>
+                <div class="answer-area">
+                    <label for="answer-input">Your answer</label>
+                    <textarea id="answer-input" rows="5" maxlength="5000" placeholder="Type your answer here, or use the microphone to dictate…" disabled></textarea>
+                    <div class="answer-tools">
+                        <span id="speech-support" class="speech-support">Typed answers are always available.</span>
+                        <div class="answer-actions">
+                            <button class="practice-button practice-button-secondary" id="dictate-answer" type="button" disabled><i class="fa-solid fa-microphone"></i> Dictate answer</button>
+                            <button class="practice-button practice-button-primary" id="next-question" type="button" disabled>Next question <i class="fa-solid fa-arrow-right"></i></button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <section class="practice-results-card" id="practice-results" hidden aria-live="polite">
+                <div class="results-heading">
+                    <span class="results-icon"><i class="fa-solid fa-chart-line"></i></span>
+                    <div><span class="practice-step-label">SESSION COMPLETE</span><h2>Your practice notes</h2></div>
+                </div>
+                <p class="results-disclaimer">These automated notes use answer length and a few structure cues only. They do not assess correctness, qualifications, or interview outcomes.</p>
+                <div class="results-summary" id="results-summary"></div>
+                <div id="answer-feedback" class="answer-feedback-list"></div>
+                <button class="practice-button practice-button-primary" id="practice-again" type="button"><i class="fa-solid fa-rotate-right"></i> Practice again with new questions</button>
+            </section>
+        </div>
+
+        <aside class="practice-side-column">
+            <div class="practice-tips-card">
+                <span class="practice-step-label">QUICK GUIDE</span>
+                <h2>Make the most of it</h2>
+                <ul>
+                    <li><span><i class="fa-solid fa-check"></i></span><div><strong>Take a moment</strong><p>Pause and collect your thoughts before answering.</p></div></li>
+                    <li><span><i class="fa-solid fa-check"></i></span><div><strong>Use a clear structure</strong><p>Explain the situation, your action, and the outcome.</p></div></li>
+                    <li><span><i class="fa-solid fa-check"></i></span><div><strong>Share specific examples</strong><p>Include your own contribution and measurable results.</p></div></li>
+                </ul>
+            </div>
+            <div class="practice-privacy-card">
+                <i class="fa-solid fa-lock"></i>
+                <div><strong>Your privacy</strong><p>Media is not recorded or stored. Camera and microphone access ends when you finish or leave this page.</p></div>
+            </div>
+        </aside>
+    </section>
+</main>
+<script>
+    window.interviewPracticeContext = {{ interview_context|tojson }};
+</script>
+<script src="{{ url_for('static', filename='js/interview-practice.js') }}" defer></script>
+{% endblock %}

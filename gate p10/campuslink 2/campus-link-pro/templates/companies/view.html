@@ -1,0 +1,100 @@
+{% extends "base.html" %}
+
+{% block title %}{{ company['name'] }} | CAMPUSLINK{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div>
+        <div class="eyebrow"><i class="fa-solid fa-building"></i> Company profile</div>
+        <h1>{{ company['name'] }}</h1>
+        <p>Company details, recruiting activity, and role requirements.</p>
+    </div>
+    <div class="page-header-actions">
+        <a href="{{ url_for('companies') }}" class="btn btn-secondary"><i class="fa-solid fa-arrow-left"></i> Companies</a>
+        <a href="{{ url_for('edit_company', company_id=company['id']) }}" class="btn btn-primary"><i class="fa-solid fa-pen"></i> Edit company</a>
+    </div>
+</div>
+
+<div class="content-card company-profile-card">
+    <div class="company-profile-heading">
+        <span class="company-profile-icon"><i class="fa-solid fa-building"></i></span>
+        <div>
+            <h2>{{ company['name'] }}</h2>
+            <p>{{ company['industry'] or "Industry not provided" }}</p>
+        </div>
+        {% if is_recruiting_partner %}
+        <span class="company-recruiting-badge is-recruiting"><i class="fa-solid fa-circle-check"></i> Recruiting partner</span>
+        {% else %}
+        <span class="company-recruiting-badge"><i class="fa-regular fa-circle"></i> No active or upcoming drive</span>
+        {% endif %}
+    </div>
+
+    <div class="company-profile-details">
+        <div class="company-profile-detail">
+            <span><i class="fa-solid fa-location-dot"></i> Location</span>
+            <strong>{{ company['location'] or "Location not provided" }}</strong>
+        </div>
+        <div class="company-profile-detail">
+            <span><i class="fa-solid fa-industry"></i> Industry</span>
+            <strong>{{ company['industry'] or "Industry not provided" }}</strong>
+        </div>
+        <div class="company-profile-detail">
+            <span><i class="fa-solid fa-globe"></i> Website</span>
+            {% if company['website'] %}
+            <a href="{{ company['website'] }}" target="_blank" rel="noopener noreferrer">{{ company['website'] }}</a>
+            {% else %}
+            <strong>Website not provided</strong>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<section class="content-card company-drives-card">
+    <div class="section-header">
+        <div>
+            <h2>Job drives & required skills</h2>
+            <p>Skills are listed by role from the requirements entered for each drive.</p>
+        </div>
+        <a href="{{ url_for('jobs') }}" class="btn btn-secondary"><i class="fa-solid fa-briefcase"></i> View job drives</a>
+    </div>
+
+    {% if drives %}
+    <div class="company-drives-list">
+        {% for drive in drives %}
+        <article class="company-drive-item">
+            <div class="company-drive-heading">
+                <div>
+                    <h3>{{ drive['role'] }}</h3>
+                    <span class="company-drive-package">
+                        {% if drive['package'] is not none %}{{ drive['package']|round(1) }} LPA{% else %}Package not specified{% endif %}
+                    </span>
+                </div>
+                <span class="company-drive-status status-{{ drive['status']|lower }}">{{ drive['status'] }}</span>
+            </div>
+            <div class="company-drive-meta">
+                {% if drive['drive_date'] %}<span><i class="fa-regular fa-calendar"></i>{{ drive['drive_date']|job_date }}</span>{% endif %}
+                {% if drive['application_deadline'] %}<span><i class="fa-solid fa-hourglass-end"></i>Apply by {{ drive['application_deadline']|job_date }}</span>{% endif %}
+                {% if drive['eligible_branches'] %}<span><i class="fa-solid fa-graduation-cap"></i>{{ drive['eligible_branches'] }}</span>{% endif %}
+            </div>
+            <div class="company-required-skills">
+                <strong>Required skills</strong>
+                {% if drive['skill_list'] %}
+                <div class="company-skill-list">
+                    {% for skill in drive['skill_list'] %}<span class="company-skill-chip">{{ skill }}</span>{% endfor %}
+                </div>
+                {% else %}
+                <span class="company-skills-empty">Not specified for this role</span>
+                {% endif %}
+            </div>
+        </article>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="company-drives-empty">
+        <i class="fa-solid fa-briefcase"></i>
+        <strong>No job drives added</strong>
+        <span>Add a drive and its role-specific skill requirements to show recruiting activity here.</span>
+    </div>
+    {% endif %}
+</section>
+{% endblock %}
